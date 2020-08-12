@@ -17,6 +17,9 @@ class TextLineNumbers(tk.Canvas):
             dline= self.textwidget.dlineinfo(i)
             if dline is None: break
             y = dline[1]
-            linenum = str(i).split(".")[0]
+            columnParameter = dline[2]
+            columnValue = columnParameter//8
+
+            linenum = "L:" + str(i).split(".")[0] + " , " + "C:" + str(columnValue)
             self.create_text(2,y,anchor="nw", text=linenum)
             i = self.textwidget.index("%s+1line" % i)
