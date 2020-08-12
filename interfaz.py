@@ -196,7 +196,7 @@ class Interfaz(tk.Frame):
 
     def about(self):
         box_tilte ="Autor"
-        box_msg = "Jose Fernando Valdez Perez 201503651"
+        box_msg = "Juan Pablo García Monzón 2012-22615"
         messagebox.showinfo(box_tilte,box_msg)
 
     def ayuda(self):
