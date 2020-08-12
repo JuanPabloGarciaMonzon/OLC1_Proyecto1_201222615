@@ -26,17 +26,17 @@ class Interfaz(tk.Frame):
 
         self.terminal = tk.Text(root, width=45, height=1, background="black",foreground="#00AA00")
         self.terminal.pack(side="right", fill="both", expand=True)
-
-
+        
+          
         # Special Text
         self.text = CustomText(self)
         self.vsb = tk.Scrollbar(orient="vertical", command=self.text.yview)
         self.text.configure(yscrollcommand=self.vsb.set)
-
-
+        
+        
 
         # Text line number
-        self.linenumbers = TextLineNumbers(self, width=30)
+        self.linenumbers = TextLineNumbers(self, width=60)
         self.linenumbers.attach(self.text)
         self.vsb.pack(side="right", fill="y")
         self.linenumbers.pack(side="left", fill="y")
@@ -146,9 +146,9 @@ class Interfaz(tk.Frame):
     #File Methods
     def set_window_title(self, name=None):
         if name:
-            self.root.title(name +" - AugusIDE")
+            self.root.title(name)
         else:
-            self.root.title("Sin titulo.txt - AugusIDE")
+            self.root.title("Sin titulo.txt")
 
 
     def new_file(self):
@@ -209,6 +209,6 @@ class Interfaz(tk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("Sin titulo.txt - AugusIDE")
+    root.title("Sin titulo.txt")
     Interfaz(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
