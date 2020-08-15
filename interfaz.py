@@ -1,8 +1,8 @@
 import os
-
+import platform
+import re
 #To display pdfs
 import webbrowser
-
 #Interface toolkit of python tk interface
 import tkinter as tk
 from tkinter import filedialog, simpledialog
@@ -16,6 +16,17 @@ from TextLine import TextLineNumbers
 
 class Interfaz(tk.Frame):
     ejecutar = None
+    categoriasTokens = {
+    "comentarios": r"\/\*(\*(?!\/)|[^*])*\*\/",
+    "numeros": r"0b[0-1]+|0[0-7]+|0x([0-9]|[a-f]|[A-F])+|(?!0)\d{1,}|0",
+    "palabrasReservadas": r"_if|_while|_main"
+    }
+    categoriasNumeros ={
+    "decimal": r"(?!0)\d{1,}|0(\s|$)",
+    "binario": r"0b[0-1]+",
+    "octal": r"0[0-7]+",
+    "hexadecimal": r"0x([0-9]|[a-f]|[A-F])+"
+    }
     def __init__(self, *args, **kwargs):
         self.root = root
         tk.Frame.__init__(self, *args, **kwargs)
@@ -83,8 +94,14 @@ class Interfaz(tk.Frame):
         self.text.tag_configure("debug", background="#A9D0F5")
         self.text.tag_configure("dark", background="#A9D0F5")
 
-
-    #File Methods
+#-------------------------------------------------------Line Number Method---------------------------------------------------------------------
+    def _on_change(self, event):
+        self.linenumbers.redraw()
+        self.text.tag_remove('resaltado', '1.0', tk.END)
+        #lex = compiler.make_lexer()
+        #lex.input(self.text.get('1.0', tk.END))
+        #self.pintar(lex)   
+#-------------------------------------------------------File Menu Methods---------------------------------------------------------------------
     def set_window_title(self, name=None):
         if name:
             self.root.title(name)
@@ -105,6 +122,7 @@ class Interfaz(tk.Frame):
             with open(self.filename, "r") as f:
                self.text.insert(1.0, f.read())
             self.set_window_title(self.filename)
+            self.path_module(self.filename)
 
     def save(self):
         if self.filename:
@@ -128,27 +146,21 @@ class Interfaz(tk.Frame):
             self.set_window_title(self.filename)
         except Exception as e:
             print(e)
-
-        #Line number method
-    def _on_change(self, event):
-        self.linenumbers.redraw()
-        self.text.tag_remove('resaltado', '1.0', tk.END)
-        #lex = compiler.make_lexer()
-        #lex.input(self.text.get('1.0', tk.END))
-        #self.pintar(lex)    
-
+    
     def end(self):
         value = messagebox.askokcancel("Salir", "Está seguro que desea salir?")
         if value :
             root.destroy()
-    
 
+
+#-------------------------------------------------------Execution Menu Methods---------------------------------------------------------------------       
     def analyze(self):
-
         self.terminal.delete(1.0, tk.END)
         textarea_content = self.text.get(1.0, tk.END)
-        self.terminal.insert(tk.END,textarea_content)
+        self.result(textarea_content)
 
+
+#-------------------------------------------------------Help Menu Methods---------------------------------------------------------------------
     def about(self):
         box_tilte ="Autor"
         box_msg = "Juan Pablo García Monzón 2012-22615"
@@ -165,6 +177,63 @@ class Interfaz(tk.Frame):
 
         webbrowser.open_new(r'file://'+script_dir+'/WS.pdf')
 
+
+#-------------------------------------------------------Descision Module Methods---------------------------------------------------------------------
+    def path_module(self,entrada):
+        replaceS = entrada.replace("\\", "/")
+        x = replaceS.split(":",1)
+        if(x[0].isupper()):
+            var_split = os.path.basename(replaceS)
+            extension = var_split.split(".",1)
+            self.decision_module(extension[1])
+        else:
+            print("Linux")
+    
+    def decision_module(self,entrada):
+        if(entrada == "html"):
+            print("h")
+        elif(entrada == "css"):
+            print("c")
+        elif(entrada == "js"):
+            print("j")
+        else:
+            print("Ingrese un archivo html, css o js para hacer el analisis lexico")   
+
+#-------------------------------------------------------Analisis Lexico---------------------------------------------------------------------       
+    def clasificarTokens(self,tokensEncontrados):
+        Tokens = []
+        for token in tokensEncontrados:
+
+            cadena = token.group()
+            if (self.esComentario(cadena)):
+                Tokens.append( ("comentario", cadena))
+            else:
+                Tokens.append(("simbolo", cadena))
+        return Tokens
+
+    def esComentario (self,cadena):
+        return re.match(self.categoriasTokens["comentarios"],cadena)
+    
+    def result(self,entrada):    
+        regexTokens = r"\/\*(\*(?!\/)|[^*])*\*\/|0b[0-1]+|0[0-7]+|0x([0-9]|[a-f]|[A-F])+|(?!0)\d{1,}|0|_if|_while|_main|[A-z]{1}(\d|\w)*"
+
+        tokensEncontrados = re.finditer(regexTokens,entrada)
+        Tokens = self.clasificarTokens(tokensEncontrados)
+
+        Tabla = """\
+    +---------------------------------------------+
+    | Tipo                 |                 Valor|
+    |---------------------------------------------|
+    {}
+    +---------------------------------------------+\
+    """
+        Tabla = (Tabla.format('\n'.join("| {:<20} | {:>20} |".format(*fila)
+         for fila in Tokens)))
+        print(Tabla)
+        self.terminal.insert(tk.INSERT,Tabla)
+
+        
+#-------------------------------------------------------Main---------------------------------------------------------------------       
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Sin titulo.txt")
