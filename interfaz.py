@@ -1,9 +1,9 @@
 import os
 import platform
 import re
+import Lexico_JS
 #To display pdfs
 import webbrowser
-import RegExp
 #Interface toolkit of python tk interface
 import tkinter as tk
 from tkinter import filedialog, simpledialog
@@ -17,17 +17,8 @@ from TextLine import TextLineNumbers
 
 class Interfaz(tk.Frame):
     ejecutar = None
-    categoriasTokens = {
-    "comentarios": r"\/\*(\*(?!\/)|[^*])*\*\/",
-    "numeros": r"0b[0-1]+|0[0-7]+|0x([0-9]|[a-f]|[A-F])+|(?!0)\d{1,}|0",
-    "palabrasReservadas": r"_if|_while|_main"
-    }
-    categoriasNumeros ={
-    "decimal": r"(?!0)\d{1,}|0(\s|$)",
-    "binario": r"0b[0-1]+",
-    "octal": r"0[0-7]+",
-    "hexadecimal": r"0x([0-9]|[a-f]|[A-F])+"
-    }
+    
+
     def __init__(self, *args, **kwargs):
         self.root = root
         tk.Frame.__init__(self, *args, **kwargs)
@@ -50,12 +41,13 @@ class Interfaz(tk.Frame):
         # Text line number
         self.linenumbers = TextLineNumbers(self, width=70)
         self.linenumbers.attach(self.text)
+        
         self.vsb.pack(side="right", fill="y")
         self.linenumbers.pack(side="left", fill="y")
         self.text.pack(side="right", fill="both", expand=True)
         self.text.bind("<<Change>>", self._on_change)
         self.text.bind("<Configure>", self._on_change)
-        
+
         #Menu bar
         menubar = tk.Menu(self)
         root.config(menu=menubar)
@@ -71,9 +63,7 @@ class Interfaz(tk.Frame):
         file_dropdown.add_separator()
         file_dropdown.add_command(label="Salir", command=self.end)
 
-        run_dropdown.add_command(label="Ejecutar Analisis JS", command=self.analyze)
-        run_dropdown.add_command(label="Ejecutar Analisis CSS", command=self.analyze)
-        run_dropdown.add_command(label="Ejecutar Analisis HTML", command=self.analyze)
+        run_dropdown.add_command(label="Ejecutar", command=self.verify_path)
 
         help_dropdown.add_command(label="Acerca de", command=self.about)
         help_dropdown.add_command(label="Manual de Usuario", command=self.m_user)
@@ -125,7 +115,7 @@ class Interfaz(tk.Frame):
             with open(self.filename, "r") as f:
                self.text.insert(1.0, f.read())
             self.set_window_title(self.filename)
-            self.path_module(self.filename)
+
 
     def save(self):
         if self.filename:
@@ -157,12 +147,26 @@ class Interfaz(tk.Frame):
 
 
 #-------------------------------------------------------Execution Menu Methods---------------------------------------------------------------------       
-    def analyze(self):
+    def analyze(self,entrada):
+        js = Lexico_JS.lex_JS() 
         self.terminal.delete(1.0, tk.END)
-        textarea_content = self.text.get(1.0, tk.END)
-        self.result(textarea_content)
-
-
+        txt = self.text.get(1.0, tk.END)                        
+        if(entrada == "JS"):                                              
+            js.cadena = txt
+            js.receive_input()            
+            self.terminal.insert(tk.INSERT,"----------------------------------------Tokens--------------------------------\n")
+            self.terminal.insert(tk.END,str(js.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
+            self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
+            self.terminal.insert(tk.END,str(js.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
+        else:
+            box_tilte ="Execution Error"
+            box_msg = "Por favor revise que el archivo que haya abierto sea JS, CSS, HTML o RMT"
+            messagebox.showerror(box_tilte,box_msg)
+        if(str(txt).__contains__("PATHW:")): 
+            self.get_direction("PATHW:",js.clean)
+            if(str(txt).__contains__("PATHL:")):
+                self.get_direction("PATHL:",js.clean)
+             
 #-------------------------------------------------------Help Menu Methods---------------------------------------------------------------------
     def about(self):
         box_tilte ="Autor"
@@ -171,17 +175,20 @@ class Interfaz(tk.Frame):
 
     def m_user(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
-
         webbrowser.open_new(r'file://'+script_dir+'/WS.pdf')
-
         
     def m_tecnic(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
-
         webbrowser.open_new(r'file://'+script_dir+'/WS.pdf')
-
-
 #-------------------------------------------------------Descision Module Methods---------------------------------------------------------------------
+    def verify_path(self):
+        if self.filename == None:
+            box_tilte ="Path Error"
+            box_msg = "Por favor abra un archivo JS, CSS, HTML o RMT antes de analizar o escriba un archivo y guardelo con una de esas extensiones"
+            messagebox.showerror(box_tilte,box_msg)
+        else:
+            self.path_module(self.filename)
+  
     def path_module(self,entrada):
         replaceS = entrada.replace("\\", "/")
         x = replaceS.split(":",1)
@@ -193,49 +200,60 @@ class Interfaz(tk.Frame):
             self.decision_module(var_split)
     
     def decision_module(self,entrada):
+        decision_flag = ""
         if(entrada == "html"):
-            print("h")
+            decision_flag = "HTML"
+            self.analyze(decision_flag)
         elif(entrada == "css"):
-            print("c")
+            decision_flag = "CSS"
+            self.analyze(decision_flag)
         elif(entrada == "js"):
-            print("j")
+            decision_flag = "JS"
+            self.analyze(decision_flag)
+        elif(entrada == "rmt"):
+            decision_flag = "RMT"
+            self.analyze(decision_flag)
         else:
-            print("Ingrese un archivo html, css o js para hacer el analisis lexico")   
-
-#-------------------------------------------------------Analisis Lexico---------------------------------------------------------------------       
-    def clasificarTokens(self,tokensEncontrados):
-        Tokens = []
-        for token in tokensEncontrados:
-
-            cadena = token.group()
-            if (self.esComentario(cadena)):
-                Tokens.append( ("comentario", cadena))
-            else:
-                Tokens.append(("simbolo", cadena))
-        return Tokens
-
-    def esComentario (self,cadena):
-        return re.match(self.categoriasTokens["comentarios"],cadena)
-    
-    def result(self,entrada):    
-        regexTokens = r"\/\*(\*(?!\/)|[^*])*\*\/|0b[0-1]+|0[0-7]+|0x([0-9]|[a-f]|[A-F])+|(?!0)\d{1,}|0|_if|_while|_main|[A-z]{1}(\d|\w)*"
-
-        tokensEncontrados = re.finditer(regexTokens,entrada)
-        Tokens = self.clasificarTokens(tokensEncontrados)
-
-        Tabla = """\
-    +---------------------------------------------+
-    | Tipo                 |                 Valor|
-    |---------------------------------------------|
-    {}
-    +---------------------------------------------+\
-    """
-        Tabla = (Tabla.format('\n'.join("| {:<20} | {:>20} |".format(*fila)
-         for fila in Tokens)))
-        print(Tabla)
-        self.terminal.insert(tk.INSERT,Tabla)
-
+            decision_flag = "NONE"
+            self.analyze(decision_flag)
+#-------------------------------------------------------File Management---------------------------------------------------------------------       
+    def create_file(self,path,clean):
+        js = Lexico_JS.lex_JS()  
+        fic = open(path+"file.js", "w")
         
+        fic.write(clean)    
+        fic.close()
+
+    def get_direction(self,entrada,clean):
+        txt = self.text.get(1.0, tk.END)
+        sistema = platform.system()
+        js = Lexico_JS.lex_JS() 
+        print(js.clean)
+        if(entrada == "PATHW:" and sistema == "Windows"):            
+            path = txt.split(entrada)
+            direction = path[1].split("\n")
+            self.create_directory(direction[0],clean)
+        elif(entrada == "PATHL:" and sistema == "Linux"):
+            path = txt.split(entrada)
+            direction = path[1].split("\n")
+            self.create_directory(direction[0],clean)
+        else:
+            print("")
+            box_tilte ="Operative System Error"
+            box_msg = "La carpeta que esta tratando de crear no es el formato correcto en el sistema operativo en el que se encuentra actualmente"
+            messagebox.showerror(box_tilte,box_msg)
+
+ 
+    def create_directory(self,ruta,clean):
+        try:
+            os.makedirs(ruta)
+            self.create_file(ruta,clean)
+        except OSError:
+            pass
+  # si no podemos crear la ruta dejamos que pase
+  # si la operación resulto con éxito nos cambiamos al directorio 
+        os.chdir(ruta)
+        self.create_file(ruta,clean)
 #-------------------------------------------------------Main---------------------------------------------------------------------       
 if __name__ == "__main__":
     root = tk.Tk()
