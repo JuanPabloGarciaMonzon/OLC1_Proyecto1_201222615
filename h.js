@@ -4,6 +4,7 @@ xD
 //PATHW:c:\usuarios\user\documents\output\js\
 Entrada de texto @ identificador_01_dos
 xD
+$
 Ho@la
 5 12.5
 85984
@@ -28,4 +29,5 @@ if (6 == 8)
     var num = 7;
 }
 12*-+12.5
+
 

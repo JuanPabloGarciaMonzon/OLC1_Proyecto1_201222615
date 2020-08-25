@@ -1,7 +1,9 @@
 import os
+import os.path
 import platform
 import re
 import Lexico_JS
+from error_report import errorList
 #To display pdfs
 import webbrowser
 #Interface toolkit of python tk interface
@@ -24,7 +26,6 @@ class Interfaz(tk.Frame):
         tk.Frame.__init__(self, *args, **kwargs)
 
         self.tipoAnalizador = True
-
         self.filename = None
 
         self.terminal = tk.Text(root, width=45, height=1, background="black",foreground="#00AA00")
@@ -53,6 +54,7 @@ class Interfaz(tk.Frame):
         root.config(menu=menubar)
         file_dropdown = tk.Menu(menubar, tearoff=0)
         run_dropdown = tk.Menu(menubar, tearoff=0)
+        report_dropdown = tk.Menu(menubar, tearoff=0)
         help_dropdown = tk.Menu(menubar, tearoff=0)
 
 
@@ -65,6 +67,9 @@ class Interfaz(tk.Frame):
 
         run_dropdown.add_command(label="Ejecutar", command=self.verify_path)
 
+        report_dropdown.add_command(label="Errores Lexicos", command=self.errorReport)
+        
+
         help_dropdown.add_command(label="Acerca de", command=self.about)
         help_dropdown.add_command(label="Manual de Usuario", command=self.m_user)
         help_dropdown.add_command(label="Manual Técnico", command=self.m_tecnic)
@@ -73,6 +78,7 @@ class Interfaz(tk.Frame):
 
         menubar.add_cascade(label="Archivo", menu=file_dropdown)
         menubar.add_cascade(label="Ejecutar", menu=run_dropdown)
+        menubar.add_cascade(label="Reportes", menu=report_dropdown)
         menubar.add_cascade(label="Ayuda", menu=help_dropdown)
 
 
@@ -91,7 +97,8 @@ class Interfaz(tk.Frame):
         self.text.tag_remove('resaltado', '1.0', tk.END)
         #lex = compiler.make_lexer()
         #lex.input(self.text.get('1.0', tk.END))
-        #self.pintar(lex)   
+        
+        #self.pintar(txt)   
 
 
 #-------------------------------------------------------File Menu Methods---------------------------------------------------------------------
@@ -143,14 +150,22 @@ class Interfaz(tk.Frame):
     def end(self):
         value = messagebox.askokcancel("Salir", "Está seguro que desea salir?")
         if value :
-            root.destroy()
+            if(os.path.exists(('errorList.html'))):
+                os.remove('errorList.html')
+                root.destroy()
+            else:
+                root.destroy()
+            
+
+            
 
 
 #-------------------------------------------------------Execution Menu Methods---------------------------------------------------------------------       
     def analyze(self,entrada):
         js = Lexico_JS.lex_JS() 
         self.terminal.delete(1.0, tk.END)
-        txt = self.text.get(1.0, tk.END)                        
+        txt = self.text.get(1.0, tk.END)
+
         if(entrada == "JS"):                                              
             js.cadena = txt
             js.receive_input()            
@@ -158,14 +173,22 @@ class Interfaz(tk.Frame):
             self.terminal.insert(tk.END,str(js.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
             self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
             self.terminal.insert(tk.END,str(js.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
+
+
         else:
             box_tilte ="Execution Error"
             box_msg = "Por favor revise que el archivo que haya abierto sea JS, CSS, HTML o RMT"
             messagebox.showerror(box_tilte,box_msg)
+        
+        self.error(js.error_list)
+        self.pintar(js.token_output)
         if(str(txt).__contains__("PATHW:")): 
             self.get_direction("PATHW:",js.clean)
             if(str(txt).__contains__("PATHL:")):
                 self.get_direction("PATHL:",js.clean)
+        
+        
+                
              
 #-------------------------------------------------------Help Menu Methods---------------------------------------------------------------------
     def about(self):
@@ -218,7 +241,6 @@ class Interfaz(tk.Frame):
             self.analyze(decision_flag)
 #-------------------------------------------------------File Management---------------------------------------------------------------------       
     def create_file(self,path,clean):
-        js = Lexico_JS.lex_JS()  
         fic = open(path+"file.js", "w")
         
         fic.write(clean)    
@@ -227,8 +249,6 @@ class Interfaz(tk.Frame):
     def get_direction(self,entrada,clean):
         txt = self.text.get(1.0, tk.END)
         sistema = platform.system()
-        js = Lexico_JS.lex_JS() 
-        print(js.clean)
         if(entrada == "PATHW:" and sistema == "Windows"):            
             path = txt.split(entrada)
             direction = path[1].split("\n")
@@ -254,6 +274,37 @@ class Interfaz(tk.Frame):
   # si la operación resulto con éxito nos cambiamos al directorio 
         os.chdir(ruta)
         self.create_file(ruta,clean)
+#-------------------------------------------------------Reports---------------------------------------------------------------------       
+    def error(self,entrada):
+        if(len(entrada)==0):
+            box_tilte = "Tabla de Errores"
+            box_msg = "No existe ningun error"
+            messagebox.showinfo(box_tilte, box_msg)
+        else:
+            errorList(entrada)
+
+    def errorReport(self):
+        webbrowser.open_new('errorList.html')
+
+#-------------------------------------------------------Paint Words---------------------------------------------------------------------       
+    def pintar(self,token):
+        for last in token:
+            if(last[2]=="reservada"):
+                print("entro")
+                posicionInicial = f'{last[0]}.{last[1]-1}'
+                print(posicionInicial)
+                posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                print(posicionFinal)
+                self.text.tag_add('registros', posicionInicial, posicionFinal)
+            elif(last[3]=="Entrada"):
+                print("entro")
+                posicionInicial = f'{last[0]}.{last[1]-1}'
+                print(posicionInicial)
+                posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                print(posicionFinal)
+                self.text.tag_add('registros', posicionInicial, posicionFinal)
+            else:
+                pass
 #-------------------------------------------------------Main---------------------------------------------------------------------       
 if __name__ == "__main__":
     root = tk.Tk()

@@ -17,6 +17,7 @@ class lex_JS():
         self.errors = []
         self.token_output = []
         self.error_output = []
+        self.error_list={}
         self.reserved = [
         #Var
         "var",
@@ -298,12 +299,14 @@ class lex_JS():
             elif re.search(r"[ \t]", text[self.counter]):
                 return self.multiline_state(linea, columna, text, word + text[self.counter])
             elif re.search(r"[\*]", text[self.counter]):
+                print("Asterisco:")
                 return self.final_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'nada', word]
+                return self.multiline_state(linea, columna, text, word + text[self.counter])
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'nada', word]
+            self.errors.append([self.line, self.column, "/*"])
+            return [None,None,None,None]
 
     def final_state(self,linea, columna, text, word):
         self.counter += 1
@@ -311,6 +314,7 @@ class lex_JS():
         
         if self.counter < len(text):
             if re.search(r"[\/]", text[self.counter]):
+                print("FInal multilinea")
                 return self.final_final_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'nadaA', word]
@@ -383,6 +387,7 @@ class lex_JS():
         if self.counter < len(text):
             if re.search(r"(.|\s)*[^\']", text[self.counter]):
                 if re.search(r"[\n]", text[self.counter]):
+                    print("Error:"+word)
                     self.errors.append([self.line, self.column, word])
                     return [None,None,None,None]
                 return self.simple_string_state(linea, columna, text, word + text[self.counter])
@@ -450,6 +455,24 @@ class lex_JS():
         self.verification_reserved(tokens)
         for token in tokens:
             self.token_output.append(token)
-        for error in self.errors:
+        for error in self.errors:            
             self.error_output.append(error)
-            self.clean = re.sub(error[2], '', self.cadena)
+            self.error_list[len(self.error_output)] = {'pos': 'Columna  '+str(error[1]) + ' Linea ' + str(error[0]),'Descripcion': 'Caracter incorrecto: ' + str(error[2])}
+        for e in self.cadena:
+            flag = True
+            for l in self.error_output:
+                if(l[2]==e):                    
+                    flag = False
+                    break
+                else:
+                    pass
+            if(flag):
+                self.clean+=e
+        for k in self.error_output:
+            if(k[2].find("\'")!=-1 or k[2].find("\"")!=-1 or k[2].find("/*")!=-1 ):
+                print("entro a if")
+                self.clean = self.clean.replace(k[2],"")
+        
+        return self.error_list
+
+        
