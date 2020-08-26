@@ -150,10 +150,6 @@ class Interfaz(tk.Frame):
     def end(self):
         value = messagebox.askokcancel("Salir", "Está seguro que desea salir?")
         if value :
-            if(os.path.exists(('errorList.html'))):
-                os.remove('errorList.html')
-                root.destroy()
-            else:
                 root.destroy()
             
 
@@ -290,14 +286,12 @@ class Interfaz(tk.Frame):
     def pintar(self,token):
         for last in token:
             if(last[2]=="reservada"):
-                print("entro")
                 posicionInicial = f'{last[0]}.{last[1]-1}'
                 print(posicionInicial)
                 posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                 print(posicionFinal)
                 self.text.tag_add('registros', posicionInicial, posicionFinal)
             elif(last[3]=="Entrada"):
-                print("entro")
                 posicionInicial = f'{last[0]}.{last[1]-1}'
                 print(posicionInicial)
                 posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'

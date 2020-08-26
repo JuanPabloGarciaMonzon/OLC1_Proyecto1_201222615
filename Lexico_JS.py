@@ -65,9 +65,9 @@ class lex_JS():
             elif re.search(r"[-]", text[self.counter]): #MENOS O DECREMENTO
                 listaTokens.append(self.substracion_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[&]", text[self.counter]): #CONJUNCION
-                listaTokens.append(self.conjuction_state(self.line, self.column, text, text[self.counter]))
+                listaTokens.append(self.amperson_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[|]", text[self.counter]): #DISYUNCION
-                listaTokens.append(self.disyunction_state(self.line, self.column, text, text[self.counter]))
+                listaTokens.append(self.pipe_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[/]", text[self.counter]): #DIVISION
                 listaTokens.append(self.div_state(self.line, self.column, text, text[self.counter]))
 
@@ -137,8 +137,7 @@ class lex_JS():
         else:
             return [linea, columna, 'menorIgualQue', word]
 #----------------------------------------------------------------------------------------------------------------------------
-
-    def conjuction_state(self,linea, columna, text, word):
+    def amperson_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
@@ -146,23 +145,39 @@ class lex_JS():
                 
                 return self.conjuction_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'conjuncion', word]
+                self.errors.append([self.line, self.column, word])
+                return [None,None,None,None]
                 #agregar automata de identificador en el arbol, con el valor
         else:
+            self.errors.append([self.line, self.column, word])
+            return [None,None,None,None]
+
+    def conjuction_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
             return [linea, columna, 'conjuncion', word]
 #----------------------------------------------------------------------------------------------------------------------------
+
+    def pipe_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"[|]", text[self.counter]):#CONJUNCION
+                
+                return self.disyunction_state(linea, columna, text, word + text[self.counter])
+            else:
+                self.errors.append([self.line, self.column, word])
+                return [None,None,None,None]
+                #agregar automata de identificador en el arbol, con el valor
+        else:
+            self.errors.append([self.line, self.column, word])
+            return [None,None,None,None]
 
     def disyunction_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[|]", text[self.counter]):#DISYUNCION
-                
-                return self.disyunction_state(linea, columna, text, word + text[self.counter])
-            else:
-                return [linea, columna, 'disyuncion', word]
-                #agregar automata de identificador en el arbol, con el valor
-        else:
             return [linea, columna, 'disyuncion', word]
 #----------------------------------------------------------------------------------------------------------------------------  
     def plus_state(self,linea, columna, text, word):
@@ -452,27 +467,36 @@ class lex_JS():
 
     def receive_input(self):
         tokens = self.initial_state(self.cadena)
+        aux=[]
         self.verification_reserved(tokens)
+        counter = 0
         for token in tokens:
             self.token_output.append(token)
-        for error in self.errors:            
+        for error in self.errors:
+            counter+=1
+            print(counter)            
             self.error_output.append(error)
-            self.error_list[len(self.error_output)] = {'pos': 'Columna  '+str(error[1]) + ' Linea ' + str(error[0]),'Descripcion': 'Caracter incorrecto: ' + str(error[2])}
+            self.error_list[len(self.error_output)] = {'pos': 'Columna  '+str(error[1]) + ' Linea ' + str(error[0])+ 'Contador:'+str(counter),'Descripcion': 'Caracter incorrecto: ' + str(error[2])}
+            print(self.error_list)
         for e in self.cadena:
             flag = True
             for l in self.error_output:
                 if(l[2]==e):                    
                     flag = False
+                    aux=l[:]
+                    if(l[2]=="&"):
+                        self.error_output.remove(l)
                     break
                 else:
                     pass
             if(flag):
+                
                 self.clean+=e
+        self.error_output.append(aux)
         for k in self.error_output:
             if(k[2].find("\'")!=-1 or k[2].find("\"")!=-1 or k[2].find("/*")!=-1 ):
-                print("entro a if")
                 self.clean = self.clean.replace(k[2],"")
         
-        return self.error_list
+
 
         
