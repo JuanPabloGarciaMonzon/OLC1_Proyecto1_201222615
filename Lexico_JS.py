@@ -19,8 +19,6 @@ class lex_JS():
         self.error_output = []
         self.error_list={}
         self.reserved = [
-        #Var
-        "var",
         #Control Sentences
         "if","else","for","while","do",
         "continue","break","return",
@@ -87,7 +85,7 @@ class lex_JS():
                 for clave in self.signs:
                     valor = self.signs[clave]
                     if re.search(valor, text[self.counter]):
-                        listaTokens.append([self.line, self.column, clave, valor.replace('\\','')])
+                        listaTokens.append([self.line, self.column, "operador", valor.replace('\\','')])
                         self.counter += 1
                         self.column += 1
                         isSign = True
@@ -120,10 +118,10 @@ class lex_JS():
                 
                 return self.below_equal_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'menorQue', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'menorQue', word]
+            return [linea, columna, 'operador', word]
 
     def below_equal_state(self,linea, columna, text, word):
         self.counter += 1
@@ -132,10 +130,10 @@ class lex_JS():
             if re.search(r"[=]", text[self.counter]):##MENOR O IGUAL QUE
                 return self.below_equal_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'menorIgualQue', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'menorIgualQue', word]
+            return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
     def amperson_state(self,linea, columna, text, word):
         self.counter += 1
@@ -156,7 +154,7 @@ class lex_JS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'conjuncion', word]
+            return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
 
     def pipe_state(self,linea, columna, text, word):
@@ -178,7 +176,7 @@ class lex_JS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'disyuncion', word]
+            return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------  
     def plus_state(self,linea, columna, text, word):
         self.counter += 1
@@ -187,16 +185,16 @@ class lex_JS():
             if re.search(r"[+]", text[self.counter]):#MENOR O IGUAL QUE                
                 return self.increment_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'mas', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'mas', word]
+            return [linea, columna, 'operador', word]
 
     def increment_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'incremento', word]
+            return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
     def substracion_state(self,linea, columna, text, word):
         self.counter += 1
@@ -205,16 +203,16 @@ class lex_JS():
             if re.search(r"[-]", text[self.counter]):#MENOR O IGUAL QUE               
                 return self.decrement_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'menos', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'menos', word]
+            return [linea, columna, 'operador', word]
 
     def decrement_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'decremento', word]
+            return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
     def above_state(self,linea, columna, text, word):
         self.counter += 1
@@ -223,10 +221,10 @@ class lex_JS():
             if re.search(r"[=]", text[self.counter]):#MENOR O IGUAL QUE
                 return self.above_equal_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'mayorQue', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'mayorQue', word]
+            return [linea, columna, 'operador', word]
 
     def above_equal_state(self,linea, columna, text, word):
         self.counter += 1
@@ -235,10 +233,10 @@ class lex_JS():
             if re.search(r"[=]", text[self.counter]):##MENOR O IGUAL QUE
                 return self.above_equal_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'mayorIgualQue', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'mayorIgualQue', word]
+            return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
 
     def equal_state(self,linea, columna, text, word):
@@ -250,22 +248,22 @@ class lex_JS():
             elif re.search(r"[>]", text[self.counter]):#IMPLEMENTACION
                 return self.implementation_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'igual', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'igual', word]
+            return [linea, columna, 'operador', word]
 
     def equal_equal_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'igualdad', word]
+            return [linea, columna, 'operador', word]
 
     def implementation_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'implementacion', word]
+            return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
 
     def div_state(self,linea, columna, text, word):
@@ -277,10 +275,10 @@ class lex_JS():
             if re.search(r"[\*]", text[self.counter]):
                 return self.multiline_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'division', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'division', word]
+            return [linea, columna, 'operador', word]
 
 
     def uniline_state(self,linea, columna, text, word):
@@ -295,10 +293,10 @@ class lex_JS():
 
             else:
 
-                return [linea, columna, 'comentario unilinea', word]
+                return [linea, columna, 'comentario', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'comentario unilinea', word]
+            return [linea, columna, 'comentario', word]
 #----------------------------------------------------------------------------------------------------------------------------
     def multiline_state(self,linea, columna, text, word):
         self.counter += 1
@@ -341,7 +339,7 @@ class lex_JS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'comentario multilinea',  word]
+            return [linea, columna, 'comentario',  word]
 #----------------------------------------------------------------------------------------------------------------------------
 
     def not_state(self,linea, columna, text, word):
@@ -351,10 +349,10 @@ class lex_JS():
             if re.search(r"[=]", text[self.counter]):#NOT
                 return self.difference_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'not', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'not', word]
+            return [linea, columna, 'operador', word]
 
     def difference_state(self,linea, columna, text, word):
         self.counter += 1
@@ -363,10 +361,10 @@ class lex_JS():
             if re.search(r"[=]", text[self.counter]):#DIFERENCIA
                 return self.above_equal_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'diferencia', word]
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'diferencia', word]  
+            return [linea, columna, 'operador', word]  
 #----------------------------------------------------------------------------------------------------------------------------
 
     def number_state(self,linea, columna, text, word):
@@ -420,7 +418,7 @@ class lex_JS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'cadena simple',  word]
+            return [linea, columna, 'string',  word]
 #----------------------------------------------------------------------------------------------------------------------------
     def double_string_state(self,linea, columna, text, word):
         self.counter += 1
@@ -447,13 +445,7 @@ class lex_JS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'cadena doble',  word]
-
-    def double_string_error_state(self,linea, columna, text, word):
-        self.counter += 1
-        self.column += 1
-        if self.counter < len(text):
-            return [linea, columna, 'identificador', word]   
+            return [linea, columna, 'string',  word]
 #----------------------------------------------------------------------------------------------------------------------------
 
     def verification_reserved(self,TokenList):
@@ -468,34 +460,49 @@ class lex_JS():
     def receive_input(self):
         tokens = self.initial_state(self.cadena)
         aux=[]
+        aux1=[]
         self.verification_reserved(tokens)
         counter = 0
         for token in tokens:
             self.token_output.append(token)
+
         for error in self.errors:
-            counter+=1
-            print(counter)            
-            self.error_output.append(error)
-            self.error_list[len(self.error_output)] = {'pos': 'Columna  '+str(error[1]) + ' Linea ' + str(error[0])+ 'Contador:'+str(counter),'Descripcion': 'Caracter incorrecto: ' + str(error[2])}
-            print(self.error_list)
-        for e in self.cadena:
-            flag = True
-            for l in self.error_output:
-                if(l[2]==e):                    
-                    flag = False
-                    aux=l[:]
-                    if(l[2]=="&"):
-                        self.error_output.remove(l)
+            counter+=1          
+            self.error_output.append(error)          
+            self.error_list[len(self.error_output)] = {'count':str(counter), 'column':str(error[1]) ,"line":str(error[0]),'Descripcion':str(error[2])}
+       
+        for a in self.cadena.splitlines():
+            aux.append(a)
+            self.clean=a            
+            for k in self.error_output:
+                if(a.__contains__(k[2])):
+                    b = re.sub(k[2], '', self.clean)
+                    print(b)
                     break
                 else:
                     pass
-            if(flag):
+
+        # for e in self.cadena:
+        #     flag = True
+        #     for l in self.error_output:
+        #         if(l[2]==e):                    
+        #             flag = False
+        #             aux.append(l)
+        #             if(l[2]=="&"):
+        #                 self.error_output.remove(l)
+
+        #             break
+        #         else:
+        #             pass
+            
+        #     if(flag):
                 
-                self.clean+=e
-        self.error_output.append(aux)
-        for k in self.error_output:
-            if(k[2].find("\'")!=-1 or k[2].find("\"")!=-1 or k[2].find("/*")!=-1 ):
-                self.clean = self.clean.replace(k[2],"")
+        #         self.clean+=e
+        # self.error_output = aux.copy()
+        # #print(self.error_output)
+        # for k in self.error_output:
+        #     if(k[2].find("\'")!=-1 or k[2].find("\"")!=-1 or k[2].find("/*")!=-1 ):
+        #         self.clean = self.clean.replace(k[2],"")
         
 
 

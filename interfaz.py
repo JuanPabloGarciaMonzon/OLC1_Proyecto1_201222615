@@ -82,14 +82,15 @@ class Interfaz(tk.Frame):
         menubar.add_cascade(label="Ayuda", menu=help_dropdown)
 
 
-        self.text.tag_configure("reservadas", foreground="#580382")
-        self.text.tag_configure("registros", foreground="#4B7A90")
-        self.text.tag_configure("etiquetas", foreground="#C09003")
-        self.text.tag_configure("valores", foreground="#0935E5")
-        self.text.tag_configure("especial", foreground="#878686")
-        self.text.tag_configure("resaltado", background="#A9D0F5")
-        self.text.tag_configure("debug", background="#A9D0F5")
-        self.text.tag_configure("dark", background="#A9D0F5")
+        self.text.tag_configure("reserved", foreground="red")
+        self.text.tag_configure("var", foreground="#008000")
+        self.text.tag_configure("int", foreground="#0000FF")
+        self.text.tag_configure("boolean", foreground="#0000FF")
+        self.text.tag_configure("string", foreground="#FFFF00")
+        self.text.tag_configure("comment", foreground="#808080")
+        self.text.tag_configure("operator", foreground="#FFA500")
+
+
 
 #-------------------------------------------------------Line Number Method---------------------------------------------------------------------
     def _on_change(self, event):
@@ -276,27 +277,54 @@ class Interfaz(tk.Frame):
             box_tilte = "Tabla de Errores"
             box_msg = "No existe ningun error"
             messagebox.showinfo(box_tilte, box_msg)
+
         else:
             errorList(entrada)
 
     def errorReport(self):
-        webbrowser.open_new('errorList.html')
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        webbrowser.open_new(r'file://' + script_dir + '/errorList.html')
 
 #-------------------------------------------------------Paint Words---------------------------------------------------------------------       
     def pintar(self,token):
         for last in token:
             if(last[2]=="reservada"):
                 posicionInicial = f'{last[0]}.{last[1]-1}'
-                print(posicionInicial)
                 posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
-                print(posicionFinal)
-                self.text.tag_add('registros', posicionInicial, posicionFinal)
-            elif(last[3]=="Entrada"):
+                self.text.tag_add('reserved', posicionInicial, posicionFinal)
+
+            elif(last[3].lower()=="var"):
                 posicionInicial = f'{last[0]}.{last[1]-1}'
-                print(posicionInicial)
                 posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
-                print(posicionFinal)
-                self.text.tag_add('registros', posicionInicial, posicionFinal)
+                self.text.tag_add('var', posicionInicial, posicionFinal)
+
+            elif(last[2].lower()=="string"):
+                posicionInicial = f'{last[0]}.{last[1]-1}'
+                posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                self.text.tag_add('string', posicionInicial, posicionFinal)
+
+            elif(last[2].lower()=="integer"):
+                posicionInicial = f'{last[0]}.{last[1]-1}'
+                posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                self.text.tag_add('int', posicionInicial, posicionFinal)
+
+            elif(last[3].lower()=="true" or last[3].lower()=="false"):
+                posicionInicial = f'{last[0]}.{last[1]-1}'
+                posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                self.text.tag_add('boolean', posicionInicial, posicionFinal)
+
+            elif(last[2].lower()=="comentario"):
+                posicionInicial = f'{last[0]}.{last[1]-1}'
+                posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                self.text.tag_add('comment', posicionInicial, posicionFinal)
+
+            elif(last[2].lower()=="operador"):
+                posicionInicial = f'{last[0]}.{last[1]-1}'
+                posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                self.text.tag_add('operator', posicionInicial, posicionFinal)
+
+
+
             else:
                 pass
 #-------------------------------------------------------Main---------------------------------------------------------------------       
