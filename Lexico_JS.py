@@ -465,44 +465,14 @@ class lex_JS():
         counter = 0
         for token in tokens:
             self.token_output.append(token)
-
+            if(token[0]!=None):
+                self.clean+=" "+str(token[3])
+            # self.clean+=str(token[3])
         for error in self.errors:
             counter+=1          
             self.error_output.append(error)          
             self.error_list[len(self.error_output)] = {'count':str(counter), 'column':str(error[1]) ,"line":str(error[0]),'Descripcion':str(error[2])}
-       
-        for a in self.cadena.splitlines():
-            aux.append(a)
-            self.clean=a            
-            for k in self.error_output:
-                if(a.__contains__(k[2])):
-                    b = re.sub(k[2], '', self.clean)
-                    print(b)
-                    break
-                else:
-                    pass
 
-        # for e in self.cadena:
-        #     flag = True
-        #     for l in self.error_output:
-        #         if(l[2]==e):                    
-        #             flag = False
-        #             aux.append(l)
-        #             if(l[2]=="&"):
-        #                 self.error_output.remove(l)
-
-        #             break
-        #         else:
-        #             pass
-            
-        #     if(flag):
-                
-        #         self.clean+=e
-        # self.error_output = aux.copy()
-        # #print(self.error_output)
-        # for k in self.error_output:
-        #     if(k[2].find("\'")!=-1 or k[2].find("\"")!=-1 or k[2].find("/*")!=-1 ):
-        #         self.clean = self.clean.replace(k[2],"")
         
 
 
