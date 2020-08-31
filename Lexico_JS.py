@@ -1,11 +1,6 @@
 import os
 import platform
 import re
-import tkinter as tk
-#import interfaz
-#To display pdfs
-import webbrowser
-import re
 class lex_JS():
     
     def __init__(self): 
@@ -72,7 +67,8 @@ class lex_JS():
             elif re.search(r"[\n]", text[self.counter]):#SALTO DE LINEA
                 self.counter += 1
                 self.line += 1
-                self.column = 1 
+                self.column = 1
+                listaTokens.append([self.line, self.column, "salto", "\n"])
             elif re.search(r"[ \t]", text[self.counter]):#ESPACIOS Y TABULACIONES
                 self.counter += 1
                 self.column += 1
@@ -312,7 +308,6 @@ class lex_JS():
             elif re.search(r"[ \t]", text[self.counter]):
                 return self.multiline_state(linea, columna, text, word + text[self.counter])
             elif re.search(r"[\*]", text[self.counter]):
-                print("Asterisco:")
                 return self.final_state(linea, columna, text, word + text[self.counter])
             else:
                 return self.multiline_state(linea, columna, text, word + text[self.counter])
@@ -327,7 +322,6 @@ class lex_JS():
         
         if self.counter < len(text):
             if re.search(r"[\/]", text[self.counter]):
-                print("FInal multilinea")
                 return self.final_final_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'nadaA', word]
@@ -400,7 +394,6 @@ class lex_JS():
         if self.counter < len(text):
             if re.search(r"(.|\s)*[^\']", text[self.counter]):
                 if re.search(r"[\n]", text[self.counter]):
-                    print("Error:"+word)
                     self.errors.append([self.line, self.column, word])
                     return [None,None,None,None]
                 return self.simple_string_state(linea, columna, text, word + text[self.counter])
@@ -459,8 +452,6 @@ class lex_JS():
 
     def receive_input(self):
         tokens = self.initial_state(self.cadena)
-        aux=[]
-        aux1=[]
         self.verification_reserved(tokens)
         counter = 0
         for token in tokens:
@@ -472,6 +463,7 @@ class lex_JS():
             counter+=1          
             self.error_output.append(error)          
             self.error_list[len(self.error_output)] = {'count':str(counter), 'column':str(error[1]) ,"line":str(error[0]),'Descripcion':str(error[2])}
+#----------------------------------------------------------------------------------------------------------------------------
 
         
 

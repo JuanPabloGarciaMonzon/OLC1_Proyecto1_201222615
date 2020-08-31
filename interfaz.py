@@ -2,7 +2,11 @@ import os
 import platform
 import re
 import Lexico_JS
+import Lexico_RMT
 from error_report import errorList
+from Sintactico_RMT import syn_RMT
+from Lexico_CSS import lex_CSS
+from Lexico_HTML import lex_HTML
 #To display pdfs
 import webbrowser
 #Interface toolkit of python tk interface
@@ -133,6 +137,9 @@ class Interfaz(tk.Frame):
 #-------------------------------------------------------Execution Menu Methods---------------------------------------------------------------------       
     def analyze(self,entrada):
         js = Lexico_JS.lex_JS() 
+        rmt = Lexico_RMT.lex_RMT()
+        css = lex_CSS()
+        html = lex_HTML()
         self.terminal.delete(1.0, tk.END)
         txt = self.text.get(1.0, tk.END)
 
@@ -149,6 +156,45 @@ class Interfaz(tk.Frame):
                 self.get_direction("PATHW:",js.clean)
                 if(str(txt).__contains__("PATHL:")):
                     self.get_direction("PATHL:",js.clean)
+
+        elif(entrada == "CSS"):                                              
+            css.cadena = txt
+            css.receive_input()            
+            self.terminal.insert(tk.INSERT,"----------------------------------------Tokens--------------------------------\n")
+            self.terminal.insert(tk.END,str(css.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
+            self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
+            self.terminal.insert(tk.END,str(css.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
+            self.error(css.error_list)
+            self.pintar(css.token_output)
+            if(str(txt).__contains__("PATHW:")):
+                self.get_direction("PATHW:",css.clean)
+                if(str(txt).__contains__("PATHL:")):
+                    self.get_direction("PATHL:",css.clean)
+
+        elif(entrada == "HTML"):                                              
+            html.cadena = txt
+            html.receive_input()            
+            self.terminal.insert(tk.INSERT,"----------------------------------------Tokens--------------------------------\n")
+            self.terminal.insert(tk.END,str(html.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
+            self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
+            self.terminal.insert(tk.END,str(html.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
+            self.error(html.error_list)
+            self.pintarHTML(html.token_output)
+            if(str(txt).__contains__("PATHW:")):
+                self.get_direction("PATHW:",html.clean)
+                if(str(txt).__contains__("PATHL:")):
+                    self.get_direction("PATHL:",html.clean)
+
+        elif(entrada == "RMT"):                                              
+            rmt.cadena = txt
+            rmt.receive_input()            
+            self.terminal.insert(tk.INSERT,"----------------------------------------Tokens--------------------------------\n")
+            self.terminal.insert(tk.END,str(rmt.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
+            self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
+            self.terminal.insert(tk.END,str(rmt.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
+            self.error(rmt.error_list)
+            self.pintar(rmt.token_output)
+            syn = syn_RMT(rmt.token_output) 
 
         else:
             box_tilte ="Execution Error"
@@ -201,7 +247,6 @@ class Interfaz(tk.Frame):
     def path_module(self,entrada):
         if(os.path.exists(entrada)):
             var_split = os.path.splitext(entrada)[1][1:]
-            print(var_split)
             self.decision_module(var_split)
         else:
             box_tilte ="Path File Error"
@@ -231,12 +276,13 @@ class Interfaz(tk.Frame):
         sistema = platform.system()
         if(entrada == "PATHW:" and sistema == "Windows"):            
             if(txt.__contains__("PATHW: ")):
-                path = txt.split("PATHW: ")
+                path = txt.split("PATHW: ")                
                 direction = path[1].split("\n")
-                self.create_file(direction[0],clean)
+                self.create_file(direction[0].replace("*/",""),clean)
             elif(txt.__contains__("PATHW:")):
                 path = txt.split("PATHW:")
                 direction = path[1].split("\n")
+                print(direction)
                 self.create_file(direction[0],clean)               
         elif(entrada == "PATHL:" and sistema == "Linux"):            
             if(txt.__contains__("PATHL: ")):
@@ -253,26 +299,48 @@ class Interfaz(tk.Frame):
             messagebox.showerror(box_tilte,box_msg)
 
     def create_file(self,path,clean):
+        var_split = os.path.splitext(self.filename)[1][1:]
+        print(path)
         if (os.path.exists(path)):
             try:
                 os.chdir(path.replace("\\","/"))
-                fic = open(path+"file.js", "w")     
-                fic.write(clean)    
-                fic.close()
+                if(var_split=="js"):                    
+                    fic = open(path+"file.js", "w")     
+                    fic.write(clean)    
+                    fic.close()
+                elif(var_split=="css"):                    
+                    fic = open(path+"file.css", "w")     
+                    fic.write(clean)    
+                    fic.close()
+                elif(var_split=="html"):                    
+                    fic = open(path+"file.html", "w")     
+                    fic.write(clean)    
+                    fic.close()
+                else:
+                    pass
             except Exception as e:
                 box_tilte ="Path Error"
-                box_msg = "La ruta del archivo que trata de acceder esta escrita de forma incorrecta, revise su archivo de entrada. Puede ser que tenga un espacio de más"
-                messagebox.showerror(box_tilte,box_msg)
+                messagebox.showerror(box_tilte,e)
         else:
             try:
                 os.makedirs(path.replace("\\","/"))
-                fic = open(path+"file.js", "w")     
-                fic.write(clean)    
-                fic.close()
+                if(var_split=="js"):                    
+                    fic = open(path+"file.js", "w")     
+                    fic.write(clean)    
+                    fic.close()
+                elif(var_split=="css"):                    
+                    fic = open(path+"file.css", "w")     
+                    fic.write(clean)    
+                    fic.close()
+                elif(var_split=="html"):                    
+                    fic = open(path+"file.html", "w")     
+                    fic.write(clean)    
+                    fic.close()
+                else:
+                    pass
             except Exception as e:
                 box_tilte ="New Path Error"
-                box_msg = "La ruta del archivo que trata de acceder esta escrita de forma incorrecta, revise su archivo de entrada. Puede ser que tenga un espaciod de más"
-                messagebox.showerror(box_tilte,box_msg)
+                messagebox.showerror(box_tilte,e)
 #-------------------------------------------------------Reports---------------------------------------------------------------------       
     def error(self,entrada):
         if(len(entrada)==0):
@@ -306,12 +374,66 @@ class Interfaz(tk.Frame):
                     posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                     self.text.tag_add('var', posicionInicial, posicionFinal)
 
+
                 elif(last[2].lower()=="string"):
                     posicionInicial = f'{last[0]}.{last[1]-1}'
                     posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                     self.text.tag_add('string', posicionInicial, posicionFinal)
 
                 elif(last[2].lower()=="integer"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('int', posicionInicial, posicionFinal)
+
+                elif(last[2].lower()=="decimal"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('int', posicionInicial, posicionFinal)
+
+                elif(last[3].lower()=="true" or last[3].lower()=="false"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('boolean', posicionInicial, posicionFinal)
+
+                elif(last[2].lower()=="comentario"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('comment', posicionInicial, posicionFinal)
+
+                elif(last[2].lower()=="operador"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('operator', posicionInicial, posicionFinal)
+                else:
+                    pass
+            else:
+                pass
+
+    def pintarHTML(self,token):
+        for last in token:
+            if(last[0]!=None):
+                if(last[2]=="reservada"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('reserved', posicionInicial, posicionFinal)
+
+                elif(last[3].lower()=="var"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('var', posicionInicial, posicionFinal)
+
+
+                elif(last[2].lower()=="string"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('string', posicionInicial, posicionFinal)
+
+                elif(last[2].lower()=="integer"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('int', posicionInicial, posicionFinal)
+
+                elif(last[2].lower()=="decimal"):
                     posicionInicial = f'{last[0]}.{last[1]-1}'
                     posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                     self.text.tag_add('int', posicionInicial, posicionFinal)
