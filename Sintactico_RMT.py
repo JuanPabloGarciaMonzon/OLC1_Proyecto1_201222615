@@ -2,93 +2,122 @@ import os
 import re
 from Lexico_RMT import lex_RMT
 
-    #' E-> T EP
-    #' EP-> + T EP
-    #'    | - T EP
-    #'    | EPSILON
-    #' T->F TP
-    #' TP-> * F TP
-    #'    | / F TP
-    #'    | EPSILON
-    #' F->  (E)
-    #'    | NUMERO
+#     #  S->E
+#     #' E-> T EP
+#     #' EP-> + T EP
+#     #'    | - T EP
+#     #'    | EPSILON
+#     #' T->F TP
+#     #' TP-> * F TP
+#     #'    | / F TP
+#     #'    | EPSILON
+#     #' F->  (E) SL 
+#     #'    | NUMERO SL
+#     #     | ID SL 
+#     # SL->\n
+#     #    |EPSILON 
 
 class syn_RMT():
 
-    def E(self):
-        self.counter += 1
-        self.column += 1
-        if self.counter < len(text):
-            if re.search(r"[a-zA-Z_0-9]", text[self.counter]):#IDENTIFICADOR
-                return self.identifier_state(linea, columna, text, word + text[self.counter])
-            else:
-                return [linea, columna, 'identificador', word]
-                #agregar automata de identificador en el arbol, con el valor
-        else:
-            return [linea, columna, 'identificador', word]
+#     def S(self):
+#         #Mandar a llamar a E
 
-    def EP(self):
-        print("EP")
-        for i in self.list:
-            if(i[3]==self.signs.signs.get("MAS")):
-                #EP-> + T EP
-                print(re.match(rmt.signs.get("MAS"),"+"))
-                self.T()
-                self.EP()
-            elif (i[3]==self.signs.signs.get("MENOS")):
-                #EP-> - T EP
-                print(re.match(rmt.signs.get("MENOS"),"-"))
-                self.T()
-                self.EP()
-            #EP-> EPSILON
-            #Para esta producción de EP en epsilon (cadena vacía), simplemente no se hace nada.
+#     def E(self):
+#         #Mandar a llamar a T 
+#         #Mandar a llamar a EP
+
+#     def EP(self):
+#         #Miro mi token actual
+#         #if(tokenActual == +):
+#             #tokenA = token_output[self.contadorT]
+#             #match(+)
+#             #T
+#             #EP
+#         #elif (tokenActual == -)
+#             #tokenA = token_output[self.contadorT]
+#             #match(-)
+#             #T
+#             #EP
+#         else:
+#             pass 
             
-    def T(self):
-        print("T")
-        self.F()
-        self.TP()
+#     def T(self):
+#             #F
+#             #TP
 
-    def TP(self):
-        print("TP")
-        for i in self.list:
-            if(i[3]==self.signs.signs.get("POR")):
-                #TP-> * F TP
-                if(re.match(rmt.signs.get("POR"),"*")):
-                    self.F()
-                    self.TP()
-                else:
-                    print("ERROR EN MULTIPLICACION")
-                    
-            elif (i[3]==self.signs.signs.get("DIV")):
-                #TP-> / F TP
-                if(re.match(rmt.signs.get("DIV"),"/")):
-                    self.F()
-                    self.TP()
-                else:
-                    print("ERROR EN DIVISION")
-            #EP-> EPSILON
-            #Para esta producción de EP en epsilon (cadena vacía), simplemente no se hace nada.
+#     def TP(self):
+#         #Miro mi token actual
+#         #if(tokenActual == *):
+#             #tokenA = token_output[self.contadorT]
+#             #match(*)
+#             #T
+#             #EP
+#         #elif (tokenActual == /)
+#             #tokenA = token_output[self.contadorT]
+#             #match(/)
+#             #T
+#             #EP
+#         #else:
+#             #pass 
+            
 
-    def F(self):
-        print("F")
-        for i in self.list:
-            if(i[3]==self.signs.signs.get("PARA")):
-                #TF->  (E)
-                if(re.match(rmt.signs.get("PARA"),"(")):
-                    self.E()
-                else:
-                    print("ERROR EN PARENTESIS ABIERTO")
-                
-                if(re.match(rmt.signs.get("PARC"),")")):
-                    print("CORRECTO PARENTESIS CIERRA")
-                else:
-                    print("ERROR EN PARENTESIS CERRADO")
-            else:
-                if(re.match(r'[0-9]+',i[3])):
-                    print("NUMERO")
-                    self.F()
-                else:
-                    print("A SABER")
+#     def F(self):
+#         #Miro mi token actual
+#         #if(tokenActual == ( ):
+#             #tokenA = token_output[self.contadorT]
+#             #match(PARA)
+#             #E
+#             #tokenA = token_output[self.contadorT]
+#             #match(PARC)
+#             #SL
+#         #elif (tokenActual == Numero)
+#             #tokenA = token_output[self.contadorT]
+#             #match(Numero)
+#             #SL
+#         #elif (tokenActual == ID)
+#             #tokenA = token_output[self.contadorT]
+#             #match(ID)
+#             #SL
+
+
+#     def SL(self):
+#         #if(tokenA = \n):
+#         #tokenA = token_output[self.contadorT]
+#         #match(\n)
+#         #if(Flag):
+#             #Error
+#         #else:
+#             #limpia
+#         #flag = False
+#         #else:
+#         #pass
+
+#     def match(self,tokenA,simboloE,MensajeErr):
+#         #if(tokenA == simboloE):
+#             #nextToken
+#             #print(Correcto)
+#         #else:
+#             #errorsyn=linea,columna,mensajeErr,lexema,tipoE
+#             #errorSin.append(errorSyn)
+#             #panic
+
+#     def nextToken(self):
+#             #if(contadorT!=len(token_output)):
+#                 #contadorT++
+#             #return token_output[self.contadorT]
+
+#     def panic(self):
+#             #flag = True
+#             #tokenA = token_output[self.contadorT]
+#             #while(tokenA!=\n):
+#                 #tokenA = netToken()
+#                 #if(contadorA==len(token_out)):
+#                     #break
+#                 #else:
+#                     #pass
+
+
+
 
     def __init__(self,lista):
     #print(re.match(rmt.signs.get("PARA"),"("))
@@ -98,3 +127,5 @@ class syn_RMT():
         self.signs = lex_RMT()
         self.list = lista
         self.receive_input()
+        self.contadorT = 0
+        self.flag = False

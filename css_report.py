@@ -1,38 +1,36 @@
 import os
-class errorList:
+class stateList:
     def __init__(self, list,tipo):
 
         if len(list) > 0:
 
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            direction = script_dir + "/errorList.html"
+            direction = script_dir + "/css_states.html"
             try:
                 try:
                     os.remove(direction)
                 except Exception as e:
-                    print("Error borrando archivo de reportes de errores,ya que no existe")
+                    print("Error borrando archivo de reportes de estados,ya que no existe")
                 
                 file = open(direction, 'w')
                 if file:
                     file.write('<center><table border="4">')
                     file.write(
-                        '<h1>' + 'Errores Lexicos de'+" "+tipo +'</h1>'
+                        '<h1>' + 'Reporte de estados de' + " "+tipo +'</h1>'
                         '<tr>'
                                   
                        '<td>' + 'No.' +    '</td>'
-                       '<td>' + 'Linea' + '</td>'
-                       '<td>' + 'Columna' +    '</td>'
-                       '<td>' + 'Descripcion' + '</td>'
+                       '<td>' + 'Estado' + '</td>'
+                       '<td>' + 'Token' +    '</td>'
                                                                                       
                     '</tr>')
-                    for error in list:
+                    for state in list:
                         file.write(
                             '<tr>'
                             
-                            '<td>' + str(list[error]['count']) + '</td>'
-                            '<td>' + str(list[error]['line']) + '</td>'
-                            '<td>' + str(list[error]['column']) + '</td>'
-                            '<td>' + str(list[error]['Descripcion']) + '</td>'
+                            '<td>' + str(list[state]['count']) + '</td>'
+                            '<td>' + str(list[state]['estado']) + '</td>'
+                            '<td>' + str(list[state]['token']) + '</td>'
                             
                             '</tr>')
                     file.write('</table></center>')

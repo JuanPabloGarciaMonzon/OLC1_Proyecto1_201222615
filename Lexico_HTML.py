@@ -33,6 +33,7 @@ class lex_HTML():
         "PUNTO":'\.',
         "DPUNTO":'\:',
         "TAGA":'\<',
+        "TAGCI":'\>',
         "MENOS":"\-",
         "MAS":"\+",
         "IGUAL":"\="}
@@ -41,31 +42,33 @@ class lex_HTML():
 
         self.line = 1
         self.column = 1
-        listaTokens = []
+        self.listaTokens = []
 
         while self.counter < len(text):
             if re.search(r"[A-Za-z]", text[self.counter]): #IDENTIFICADOR
-                listaTokens.append(self.identifier_state(self.line,self.column,text, text[self.counter]))
+                self.listaTokens.append(self.identifier_state(self.line,self.column,text, text[self.counter]))
             elif re.search(r"[0-9]", text[self.counter]): #NUMERO
-                listaTokens.append(self.number_state(self.line, self.column, text, text[self.counter]))
+                self.listaTokens.append(self.number_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[\']", text[self.counter]): #CADENA
-                listaTokens.append(self.simple_string_state(self.line, self.column, text, text[self.counter]))
+                self.listaTokens.append(self.simple_string_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[\"]", text[self.counter]): #CADENA
-                listaTokens.append(self.double_string_state(self.line, self.column, text, text[self.counter]))          
+                self.listaTokens.append(self.double_string_state(self.line, self.column, text, text[self.counter]))          
             elif re.search(r"[\>]", text[self.counter]): #TAG DE CIERRE
-                listaTokens.append(self.tag_state(self.line, self.column, text, text[self.counter]))
-
+                self.listaTokens.append([self.line, self.column,"operador",">"])
+                self.listaTokens.append(self.tag_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[/]", text[self.counter]): #DIVISION
-                listaTokens.append(self.div_state(self.line, self.column, text, text[self.counter]))
+                self.listaTokens.append(self.div_state(self.line, self.column, text, text[self.counter]))
+                
 
             elif re.search(r"[\n]", text[self.counter]):#SALTO DE LINEA
                 self.counter += 1
                 self.line += 1
                 self.column = 1
-                listaTokens.append([self.line, self.column, "salto", "\n"])
+                self.listaTokens.append([self.line, self.column, "salto", "\n"])
             elif re.search(r"[ \t]", text[self.counter]):#ESPACIOS Y TABULACIONES
                 self.counter += 1
                 self.column += 1
+                self.listaTokens.append([self.line, self.column, "espacio", " \t"])
             elif re.search(r"[\r]", text[self.counter]):#ESPACIOS Y TABULACIONES
                 self.counter += 1
                 self.column += 1  
@@ -75,7 +78,7 @@ class lex_HTML():
                 for clave in self.signs:
                     valor = self.signs[clave]
                     if re.search(valor, text[self.counter]):
-                        listaTokens.append([self.line, self.column, "operador", valor.replace('\\','')])
+                        self.listaTokens.append([self.line, self.column, "operador", valor.replace('\\','')])
                         self.counter += 1
                         self.column += 1
                         isSign = True
@@ -84,7 +87,7 @@ class lex_HTML():
                     self.column += 1
                     self.errors.append([self.line, self.column, text[self.counter]])
                     self.counter += 1
-        return listaTokens
+        return self.listaTokens
 #----------------------------------------------------------------------------------------------------------------------------
 
     def identifier_state(self,linea, columna, text, word):
@@ -104,39 +107,46 @@ class lex_HTML():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"(.|\s)*[^\<]", text[self.counter]):#MENOR O IGUAL QUE
+            if re.search(r"(.|\s)*[^\<]", text[self.counter]):
                 if re.search(r"[\n]", text[self.counter]):
                     self.line+=1
                     return self.tag_state(linea, columna, text, word + text[self.counter])
+                elif re.search(r"[ \t]", text[self.counter]):
+                    self.column+=1
+                    return self.tag_state(linea, columna, text, word + text[self.counter])
                 return self.tag_state(linea, columna, text, word + text[self.counter])
-            elif re.search(r"[\<]", text[self.counter]):#MENOR O IGUAL QUE
-                return self.final_tag_state(linea, columna, text, word + text[self.counter])
+            elif re.search(r"[\<]", text[self.counter]):
+                return self.final_final_state(linea, columna, text, word + text[self.counter])
+                    
             else:
-                return [linea, columna, 'TAGA', word]
+                return [None,None,None,None]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'TAGA', word]
+            return [None,None,None,None]
 
-    def final_tag_state(self,linea, columna, text, word):
+
+    def final_final_state (self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
-        
         if self.counter < len(text):
             if re.search(r"[\/]", text[self.counter]):
-                return self.final_final_tag_state(linea, columna, text, word + text[self.counter])
+                return self.final_final_final_state(linea, columna, text, word + text[self.counter])
+            elif re.search(r"[\<]", text[self.counter]):
+                return self.final_final_final_state(linea, columna, text, word + text[self.counter])
+                    
             else:
-                return [linea, columna, 'TAGE', word]
+                self.listaTokens.append([linea,columna,"TAG",word[1:-1]])
+                return [linea, columna, 'operador',  "<"]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'TAGE', word]
+            return [linea, columna, 'operador',  word[2]]
 
-
-    def final_final_tag_state(self,linea, columna, text, word):
+    def final_final_final_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            return [linea, columna, 'TAGC',  word]
-
+            self.listaTokens.append([linea,columna,"TAG",word[1:-2]])           
+            return [linea, columna, 'operador',  "</"]
 #----------------------------------------------------------------------------------------------------------------------------
 
     def div_state(self,linea, columna, text, word):
@@ -268,7 +278,7 @@ class lex_HTML():
         for token in tokens:
             self.token_output.append(token)
             if(token[0]!=None):
-                self.clean+=" "+str(token[3])
+                self.clean+=str(token[3])
             # self.clean+=str(token[3])
         for error in self.errors:
             counter+=1          

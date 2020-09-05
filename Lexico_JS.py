@@ -37,7 +37,7 @@ class lex_JS():
         listaTokens = []
 
         while self.counter < len(text):
-            if re.search(r"[A-Za-z]", text[self.counter]): #IDENTIFICADOR
+            if re.search(r"[A-Za-z\_]", text[self.counter]): #IDENTIFICADOR
                 listaTokens.append(self.identifier_state(self.line,self.column,text, text[self.counter]))
             elif re.search(r"[0-9]", text[self.counter]): #NUMERO
                 listaTokens.append(self.number_state(self.line, self.column, text, text[self.counter]))
@@ -63,6 +63,7 @@ class lex_JS():
                 listaTokens.append(self.pipe_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[/]", text[self.counter]): #DIVISION
                 listaTokens.append(self.div_state(self.line, self.column, text, text[self.counter]))
+                #listaTokens.append(self.B_state(self.line, self.column, text, text[self.counter]))
 
             elif re.search(r"[\n]", text[self.counter]):#SALTO DE LINEA
                 self.counter += 1
@@ -269,7 +270,7 @@ class lex_JS():
             if re.search(r"[\/]", text[self.counter]):
                 return self.uniline_state(linea, columna, text, word + text[self.counter])
             if re.search(r"[\*]", text[self.counter]):
-                return self.multiline_state(linea, columna, text, word + text[self.counter])
+                return self.B_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
@@ -281,59 +282,77 @@ class lex_JS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[\S]", text[self.counter]):
+            if re.search(r"(.)", text[self.counter]):
                 return self.uniline_state(linea, columna, text, word + text[self.counter])
-            elif re.search(r"[ \t]", text[self.counter]):
-                
-                return self.uniline_state(linea, columna, text, word + text[self.counter])
-
-            else:
-
+            elif re.search(r"[\n]", text[self.counter]):
                 return [linea, columna, 'comentario', word]
-                #agregar automata de identificador en el arbol, con el valor
+
+
         else:
             return [linea, columna, 'comentario', word]
 #----------------------------------------------------------------------------------------------------------------------------
-    def multiline_state(self,linea, columna, text, word):
+    def B_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
-
         if self.counter < len(text):
-            if re.search(r"(.|\s)*[^\*]", text[self.counter]):
-                if re.search(r"[\n]", text[self.counter]):
-                    self.line+=1
-                    return self.multiline_state(linea, columna, text, word + text[self.counter])
-                return self.multiline_state(linea, columna, text, word + text[self.counter])
-
-            elif re.search(r"[ \t]", text[self.counter]):
-                return self.multiline_state(linea, columna, text, word + text[self.counter])
-            elif re.search(r"[\*]", text[self.counter]):
-                return self.final_state(linea, columna, text, word + text[self.counter])
+            if re.search(r"[\*]", text[self.counter]):
+                return self.C_state(linea, columna, text, word + text[self.counter])
             else:
-                return self.multiline_state(linea, columna, text, word + text[self.counter])
+                return self.C_state(linea, columna, text, word + text[self.counter])
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            self.errors.append([self.line, self.column, "/*"])
+            return self.C_state(linea, columna, text, word + text[self.counter])
+
+    def C_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"(.|\s)", text[self.counter]):
+                return self.D_state(linea, columna, text, word + text[self.counter])
+
+            else:
+                return [linea, columna, 'operador2', word]
+                #agregar automata de identificador en el arbol, con el valor
+        else:
+            return [linea, columna, 'operador', word]
+
+    def D_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"(.|\s)", text[self.counter]):
+                if re.search(r"[\*]", text[self.counter]):
+                    return self.E_state(linea, columna, text, word + text[self.counter])
+                return self.D_state(linea, columna, text, word + text[self.counter])
+            else:
+                return [linea, columna, 'operador3', word]
+                #agregar automata de identificador en el arbol, con el valor
+        else:
+            self.errors.append([self.line, self.column, word])
             return [None,None,None,None]
 
-    def final_state(self,linea, columna, text, word):
+    def E_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
-        
         if self.counter < len(text):
             if re.search(r"[\/]", text[self.counter]):
-                return self.final_final_state(linea, columna, text, word + text[self.counter])
+                if re.search(r"[a-zA-Z_0-9_._\=_^\/]", text[self.counter+1]):
+                    return self.E_state(linea, columna, text, word + text[self.counter])
+                return self.F_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'nadaA', word]
+                if re.search(r"[\n]", text[self.counter]):                    
+                    self.line+=1 
+                return self.E_state(linea, columna, text, word + text[self.counter])
                 #agregar automata de identificador en el arbol, con el valor
-        else:
-            return [linea, columna, 'nada', word]
+        else:         
+            return [linea, columna, 'operador', word]
 
-    def final_final_state(self,linea, columna, text, word):
+    def F_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
             return [linea, columna, 'comentario',  word]
+
 #----------------------------------------------------------------------------------------------------------------------------
 
     def not_state(self,linea, columna, text, word):

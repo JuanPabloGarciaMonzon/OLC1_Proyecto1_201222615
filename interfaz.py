@@ -1,9 +1,11 @@
 import os
+import sys
 import platform
 import re
 import Lexico_JS
 import Lexico_RMT
 from error_report import errorList
+from css_report import stateList
 from Sintactico_RMT import syn_RMT
 from Lexico_CSS import lex_CSS
 from Lexico_HTML import lex_HTML
@@ -65,6 +67,7 @@ class Interfaz(tk.Frame):
         run_dropdown.add_command(label="Ejecutar", command=self.verify_path)
 
         report_dropdown.add_command(label="Errores Lexicos", command=self.errorReport)
+        report_dropdown.add_command(label="Reporte de Estados", command=self.state_report)
         
         help_dropdown.add_command(label="Acerca de", command=self.about)
         help_dropdown.add_command(label="Manual de Usuario", command=self.m_user)
@@ -143,14 +146,15 @@ class Interfaz(tk.Frame):
         self.terminal.delete(1.0, tk.END)
         txt = self.text.get(1.0, tk.END)
 
-        if(entrada == "JS"):                                              
+        if(entrada == "JS"):
+            sys.setrecursionlimit(100000)                                                    
             js.cadena = txt
             js.receive_input()            
             self.terminal.insert(tk.INSERT,"----------------------------------------Tokens--------------------------------\n")
             self.terminal.insert(tk.END,str(js.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
             self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
             self.terminal.insert(tk.END,str(js.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
-            self.error(js.error_list)
+            self.error(js.error_list,"JS")
             self.pintar(js.token_output)
             if(str(txt).__contains__("PATHW:")):
                 self.get_direction("PATHW:",js.clean)
@@ -164,21 +168,23 @@ class Interfaz(tk.Frame):
             self.terminal.insert(tk.END,str(css.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
             self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
             self.terminal.insert(tk.END,str(css.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
-            self.error(css.error_list)
+            self.error(css.error_list,"CSS")
+            self.css_state(css.state_list,"CSS")
             self.pintar(css.token_output)
             if(str(txt).__contains__("PATHW:")):
                 self.get_direction("PATHW:",css.clean)
                 if(str(txt).__contains__("PATHL:")):
                     self.get_direction("PATHL:",css.clean)
 
-        elif(entrada == "HTML"):                                              
+        elif(entrada == "HTML"):     
+                                 
             html.cadena = txt
-            html.receive_input()            
+            html.receive_input()        
             self.terminal.insert(tk.INSERT,"----------------------------------------Tokens--------------------------------\n")
             self.terminal.insert(tk.END,str(html.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
             self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
             self.terminal.insert(tk.END,str(html.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
-            self.error(html.error_list)
+            self.error(html.error_list,"HTML")
             self.pintarHTML(html.token_output)
             if(str(txt).__contains__("PATHW:")):
                 self.get_direction("PATHW:",html.clean)
@@ -192,9 +198,11 @@ class Interfaz(tk.Frame):
             self.terminal.insert(tk.END,str(rmt.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
             self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
             self.terminal.insert(tk.END,str(rmt.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
-            self.error(rmt.error_list)
+            #self.error(rmt.error_list,"RMT")
+            print(rmt.token_output)
             self.pintar(rmt.token_output)
             syn = syn_RMT(rmt.token_output) 
+
 
         else:
             box_tilte ="Execution Error"
@@ -243,7 +251,7 @@ class Interfaz(tk.Frame):
             messagebox.showerror(box_tilte,box_msg)
         else:
             self.path_module(self.filename)
-  
+
     def path_module(self,entrada):
         if(os.path.exists(entrada)):
             var_split = os.path.splitext(entrada)[1][1:]
@@ -278,21 +286,25 @@ class Interfaz(tk.Frame):
             if(txt.__contains__("PATHW: ")):
                 path = txt.split("PATHW: ")                
                 direction = path[1].split("\n")
+                print(direction[0].replace("*/",""))
                 self.create_file(direction[0].replace("*/",""),clean)
+
             elif(txt.__contains__("PATHW:")):
                 path = txt.split("PATHW:")
                 direction = path[1].split("\n")
-                print(direction)
-                self.create_file(direction[0],clean)               
+                print(direction[0].replace("*/",""))
+                self.create_file(direction[0].replace("*/",""),clean)           
         elif(entrada == "PATHL:" and sistema == "Linux"):            
             if(txt.__contains__("PATHL: ")):
                 path = txt.split("PATHL: ")
                 direction = path[1].split("\n")
-                self.create_file(direction[0],clean)
+                print(direction[0].replace("*/",""))
+                self.create_file(direction[0].replace("*/",""),clean)
             elif(txt.__contains__("PATHL:")):
                 path = txt.split("PATHL:")
                 direction = path[1].split("\n")
-                self.create_file(direction[0],clean) 
+                print(direction[0].replace("*/",""))
+                self.create_file(direction[0].replace("*/",""),clean)
         else:
             box_tilte ="Operative System Error"
             box_msg = "La carpeta que esta tratando de crear no es el formato correcto en el sistema operativo en el que se encuentra actualmente"
@@ -300,7 +312,6 @@ class Interfaz(tk.Frame):
 
     def create_file(self,path,clean):
         var_split = os.path.splitext(self.filename)[1][1:]
-        print(path)
         if (os.path.exists(path)):
             try:
                 os.chdir(path.replace("\\","/"))
@@ -309,7 +320,7 @@ class Interfaz(tk.Frame):
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="css"):                    
-                    fic = open(path+"file.css", "w")     
+                    fic = open(path+"fileC.css", "w")     
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="html"):                    
@@ -323,13 +334,13 @@ class Interfaz(tk.Frame):
                 messagebox.showerror(box_tilte,e)
         else:
             try:
-                os.makedirs(path.replace("\\","/"))
+                os.mkdir(path.replace("\\","/"))
                 if(var_split=="js"):                    
                     fic = open(path+"file.js", "w")     
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="css"):                    
-                    fic = open(path+"file.css", "w")     
+                    fic = open(path+"fileC.css", "w")     
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="html"):                    
@@ -342,14 +353,14 @@ class Interfaz(tk.Frame):
                 box_tilte ="New Path Error"
                 messagebox.showerror(box_tilte,e)
 #-------------------------------------------------------Reports---------------------------------------------------------------------       
-    def error(self,entrada):
+    def error(self,entrada,tipo):
         if(len(entrada)==0):
             box_tilte = "Tabla de Errores"
             box_msg = "No existe ningun error"
             messagebox.showinfo(box_tilte, box_msg)
 
         else:
-            errorList(entrada)
+            errorList(entrada,tipo)
 
     def errorReport(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -359,7 +370,26 @@ class Interfaz(tk.Frame):
         else:
             box_tilte = "Report Error"
             box_msg = "El archivo del reporte no existe"
-            messagebox.showinfo(box_tilte, box_msg)            
+            messagebox.showinfo(box_tilte, box_msg)       
+
+    def css_state(self,entrada,tipo):
+        if(len(entrada)==0):
+            box_tilte = "Reporte de estados"
+            box_msg = "No existe ningun estado"
+            messagebox.showinfo(box_tilte, box_msg)
+
+        else:
+            stateList(entrada,tipo)
+
+    def state_report(self):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        direction = script_dir + "/css_states.html"
+        if(os.path.exists(direction)):
+            webbrowser.open_new(r'file://' + direction)
+        else:
+            box_tilte = "Report Error"
+            box_msg = "El archivo del reporte no existe"
+            messagebox.showinfo(box_tilte, box_msg)       
 #-------------------------------------------------------Paint Words---------------------------------------------------------------------       
     def pintar(self,token):
         for last in token:

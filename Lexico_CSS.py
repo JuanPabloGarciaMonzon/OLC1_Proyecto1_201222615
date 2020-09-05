@@ -10,9 +10,12 @@ class lex_CSS():
         self.column = 0
         self.counter = 0
         self.errors = []
+        self.states = []
         self.token_output = []
         self.error_output = []
+        self.state_output = []
         self.error_list={}
+        self.state_list={}
         self.reserved = [
         #Control Sentences
         "color","background-color","background-image",
@@ -54,35 +57,46 @@ class lex_CSS():
 
         while self.counter < len(text):
             
-            if re.search(r"[A-Za-z]", text[self.counter]): #IDENTIFICADOR
+            if re.search(r"[A-Za-z\-\_]", text[self.counter]): #IDENTIFICADOR
+                self.states.append(["id_inicio",text[self.counter]])
                 listaTokens.append(self.identifier_state(self.line,self.column,text, text[self.counter]))
             elif re.search(r"\#", text[self.counter]): #NUMERO
+                self.states.append(["numeral_inicio",text[self.counter]])
                 listaTokens.append(self.numeral_state(self.line, self.column, text, text[self.counter]))                
             elif re.search(r"[0-9]", text[self.counter]): #NUMERO
+                self.states.append(["numero_inicio",text[self.counter]])
                 listaTokens.append(self.number_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[\']", text[self.counter]): #CADENA
+                self.states.append(["char_inicio",text[self.counter]])
                 listaTokens.append(self.simple_string_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[\"]", text[self.counter]): #CADENA
+                self.states.append(["string_inicio",text[self.counter]])
                 listaTokens.append(self.double_string_state(self.line, self.column, text, text[self.counter]))          
 
             elif re.search(r"[=]", text[self.counter]): #IGUAL o IGUALDAD
+                self.states.append(["igual_inicio",text[self.counter]])
                 listaTokens.append(self.equal_state(self.line, self.column, text, text[self.counter]))
 
             elif re.search(r"[+]", text[self.counter]): #MAS O INCREMENTO
+                self.states.append(["mas_inicio",text[self.counter]])
                 listaTokens.append(self.plus_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[-]", text[self.counter]): #MENOS O DECREMENTO
+                self.states.append(["menos_inicio",text[self.counter]])
                 listaTokens.append(self.substracion_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[/]", text[self.counter]): #DIVISION
+                self.states.append(["division_inicio",text[self.counter]])
                 listaTokens.append(self.div_state(self.line, self.column, text, text[self.counter]))
 
             elif re.search(r"[\n]", text[self.counter]):#SALTO DE LINEA
                 self.counter += 1
                 self.line += 1
                 self.column = 1
+                self.states.append(["saltoLinea_aceptacion",text[self.counter]])
                 listaTokens.append([self.line, self.column, "salto", "\n"])
             elif re.search(r"[ \t]", text[self.counter]):#ESPACIOS Y TABULACIONES
                 self.counter += 1
                 self.column += 1
+                listaTokens.append([self.line, self.column, "espacio", " \t"])
             elif re.search(r"[\r]", text[self.counter]):#ESPACIOS Y TABULACIONES
                 self.counter += 1
                 self.column += 1  
@@ -92,6 +106,7 @@ class lex_CSS():
                 for clave in self.signs:
                     valor = self.signs[clave]
                     if re.search(valor, text[self.counter]):
+                        self.states.append(["operador_aceptacion",text[self.counter]])
                         listaTokens.append([self.line, self.column, "operador", valor.replace('\\','')])
                         self.counter += 1
                         self.column += 1
@@ -99,6 +114,7 @@ class lex_CSS():
                         break
                 if not isSign:
                     self.column += 1
+                    self.states.append(["estado_error",text[self.counter]])
                     self.errors.append([self.line, self.column, text[self.counter]])
                     self.counter += 1
         return listaTokens
@@ -108,12 +124,15 @@ class lex_CSS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[a-zA-Z_0-9\-]", text[self.counter]):#IDENTIFICADOR
+            if re.search(r"[a-zA-Z_0-9\-\_]", text[self.counter]):#IDENTIFICADOR
+                self.states.append(["id",str(text[self.counter])])
                 return self.identifier_state(linea, columna, text, word + text[self.counter])
             else:
+                self.states.append(["id_aceptacion",word])
                 return [linea, columna, 'identificador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
+            self.states.append(["id_aceptacion",word])
             return [linea, columna, 'identificador', word]
 #----------------------------------------------------------------------------------------------------------------------------
     def numeral_state(self,linea, columna, text, word):
@@ -121,63 +140,75 @@ class lex_CSS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[a-zA-F_0-9]", text[self.counter]):#IDENTIFICADOR                                  
+            if re.search(r"[a-fA-F_0-9]", text[self.counter]):#IDENTIFICADOR
+                self.states.append(["hexadecimal",text[self.counter]])                                  
                 return self.hexadecimal_state(linea, columna, text, word + text[self.counter])
             else:
-                self.errors.append([self.line, self.column, word])
-                return [None,None,None,None]
+                self.states.append(["numeral_aceptacion",word])
+                return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            self.errors.append([self.line, self.column, word])
-            return [None,None,None,None]
+            self.states.append(["numeral_aceptacion",word])
+            return [linea, columna, 'operador', word]
 
     def hexadecimal_state(self,linea, columna, text, word):
         contador = 0
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[a-zA-F_0-9\-]", text[self.counter]):#IDENTIFICADOR                                  
+            if re.search(r"[a-fA-F_0-9]", text[self.counter]):#IDENTIFICADOR
+                self.states.append(["hexadecimal",text[self.counter]])                                  
                 return self.hexadecimal_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'identificador', word]
+                self.states.append(["hexadecimal_aceptacion",word])
+                return [linea, columna, 'hexadecimal', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'identificador', word]
+            self.states.append(["hexadecimal_aceptacion",word])
+            return [linea, columna, 'hexadecimal', word]
 #----------------------------------------------------------------------------------------------------------------------------  
     def plus_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[+]", text[self.counter]):#MENOR O IGUAL QUE                
+            if re.search(r"[+]", text[self.counter]):#MENOR O IGUAL QUE
+                self.states.append(["incremento",text[self.counter]])                
                 return self.increment_state(linea, columna, text, word + text[self.counter])
             else:
+                self.states.append(["mas_aceptacion",word])
                 return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
+            self.states.append(["mas_aceptacion",word])
             return [linea, columna, 'operador', word]
 
     def increment_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
+            self.states.append(["incremento_aceptacion",word])
             return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
     def substracion_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[-]", text[self.counter]):#MENOR O IGUAL QUE               
+            if re.search(r"[-]", text[self.counter]):#MENOR O IGUAL QUE 
+                self.states.append(["decremento",text[self.counter]])              
                 return self.decrement_state(linea, columna, text, word + text[self.counter])
             else:
+                self.states.append(["menos_aceptacion",word])
                 return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
+            self.states.append(["menos_aceptacion",word])
             return [linea, columna, 'operador', word]
 
     def decrement_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
+            self.states.append(["decremento_aceptacion",word])
             return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
 
@@ -185,6 +216,7 @@ class lex_CSS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
+            self.states.append(["igual_aceptacion",word])
             return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
 
@@ -192,55 +224,92 @@ class lex_CSS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[\/]", text[self.counter]):
-                return self.uniline_state(linea, columna, text, word + text[self.counter])
             if re.search(r"[\*]", text[self.counter]):
-                return self.multiline_state(linea, columna, text, word + text[self.counter])
+                self.states.append(["comentario_inicio",text[self.counter]])
+                return self.B_state(linea, columna, text, word + text[self.counter])
             else:
+                self.states.append(["division_aceptacion",word])
                 return [linea, columna, 'operador', word]
                 #agregar automata de identificador en el arbol, con el valor
         else:
+            self.states.append(["division_aceptacion",word])
             return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
-    def multiline_state(self,linea, columna, text, word):
+    def B_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
-
         if self.counter < len(text):
-            if re.search(r"(.|\s)*[^\*]", text[self.counter]):
-                if re.search(r"[\n]", text[self.counter]):
-                    self.line+=1
-                    return self.multiline_state(linea, columna, text, word + text[self.counter])
-                return self.multiline_state(linea, columna, text, word + text[self.counter])
-
-            elif re.search(r"[ \t]", text[self.counter]):
-                return self.multiline_state(linea, columna, text, word + text[self.counter])
-            elif re.search(r"[\*]", text[self.counter]):
-                return self.final_state(linea, columna, text, word + text[self.counter])
+            if re.search(r"[\*]", text[self.counter]):
+                self.states.append(["comentario",text[self.counter]])
+                return self.C_state(linea, columna, text, word + text[self.counter])
             else:
-                return self.multiline_state(linea, columna, text, word + text[self.counter])
+                self.states.append(["comentario",text[self.counter]])
+                return self.C_state(linea, columna, text, word + text[self.counter])
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            self.errors.append([self.line, self.column, "/*"])
+            self.states.append(["comentario",text[self.counter]])
+            return self.C_state(linea, columna, text, word + text[self.counter])
+
+    def C_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"(.|\s)", text[self.counter]):
+                self.states.append(["comentario",text[self.counter]])
+                return self.D_state(linea, columna, text, word + text[self.counter])
+
+            else:
+                return [linea, columna, 'operador25', word]
+                #agregar automata de identificador en el arbol, con el valor
+        else:
+            return [linea, columna, 'operador25b', word]
+
+    def D_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"(.|\s)", text[self.counter]):
+                self.states.append(["comentario",text[self.counter]])
+                if re.search(r"[ \t]", text[self.counter]):                    
+                    self.column+=1
+                elif re.search(r"[\*]", text[self.counter]):
+                    self.states.append(["comentario",text[self.counter]])
+                    return self.E_state(linea, columna, text, word + text[self.counter])
+
+                return self.D_state(linea, columna, text, word + text[self.counter])
+            else:
+                return [linea, columna, 'operador35', word]
+                #agregar automata de identificador en el arbol, con el valor
+        else:
+            self.errors.append([self.line, self.column, word])
             return [None,None,None,None]
 
-    def final_state(self,linea, columna, text, word):
+    def E_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
-        
         if self.counter < len(text):
             if re.search(r"[\/]", text[self.counter]):
-                return self.final_final_state(linea, columna, text, word + text[self.counter])
+                if re.search(r"[a-zA-Z_0-9_._\=_^\/]", text[self.counter+1]):
+                    self.states.append(["comentario",text[self.counter]])
+                    return self.E_state(linea, columna, text, word + text[self.counter])
+                self.states.append(["comentario",text[self.counter]])
+                return self.F_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'nadaA', word]
+                if re.search(r"[\n]", text[self.counter]):                    
+                    self.line+=1
+                self.states.append(["comentario",text[self.counter]])
+                return self.E_state(linea, columna, text, word + text[self.counter])
                 #agregar automata de identificador en el arbol, con el valor
         else:
-            return [linea, columna, 'nada', word]
+            self.states.append(["comentario_Error",word])         
+            self.errors.append([self.line, self.column, word])
+            return [None,None,None,None]
 
-    def final_final_state(self,linea, columna, text, word):
+    def F_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
+            self.states.append(["comentario_aceptacion",word])
             return [linea, columna, 'comentario',  word]
 #----------------------------------------------------------------------------------------------------------------------------
 
@@ -249,15 +318,20 @@ class lex_CSS():
         self.column += 1
         if self.counter < len(text):
             if re.search(r"[0-9]", text[self.counter]):#ENTERO
+                self.states.append(["entero",str(text[self.counter])])
                 return self.number_state(linea, columna, text, word + text[self.counter])
             elif re.search(r"\.", text[self.counter]):#DECIMAL
+                self.states.append(["decimal",str(text[self.counter])])
                 return self.decimal_state(linea, columna, text, word + text[self.counter])
             elif re.search(r"\%", text[self.counter]):#DECIMAL
+                self.states.append(["porcentaje",str(text[self.counter])])
                 return self.percent_state(linea, columna, text, word + text[self.counter])
             else:
+                self.states.append(["entero_aceptacion",word])
                 return [linea, columna, 'integer', word]
                 #agregar automata de numero en el arbol, con el valor
         else:
+            self.states.append(["entero_aceptacion",word])
             return [linea, columna, 'integer', word]
 
     def decimal_state(self,linea, columna, text, word):
@@ -265,19 +339,24 @@ class lex_CSS():
         self.column += 1
         if self.counter < len(text):
             if re.search(r"[0-9]", text[self.counter]):#DECIMAL
+                self.states.append(["decimal",str(text[self.counter])])
                 return self.decimal_state(linea, columna, text, word + text[self.counter])
             elif re.search(r"\%", text[self.counter]):#DECIMAL
+                self.states.append(["porcentaje",str(text[self.counter])])
                 return self.percent_state(linea, columna, text, word + text[self.counter])
             else:
+                self.states.append(["decimal_aceptacion",word])
                 return [linea, columna, 'decimal', word]
                 #agregar automata de decimal en el arbol, con el valor
         else:
+            self.states.append(["decimal_aceptacion",word])
             return [linea, columna, 'decimal', word]
 
     def percent_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
+            self.states.append(["porcentaje_aceptacion",word])
             return [linea, columna, 'porcentaje', word]
 
 #----------------------------------------------------------------------------------------------------------------------------
@@ -287,12 +366,16 @@ class lex_CSS():
         if self.counter < len(text):
             if re.search(r"(.|\s)*[^\']", text[self.counter]):
                 if re.search(r"[\n]", text[self.counter]):
+                    self.states.append(["estadoError_char",text[self.counter]])
                     self.errors.append([self.line, self.column, word])
                     return [None,None,None,None]
+                self.states.append(["char",text[self.counter]])
                 return self.simple_string_state(linea, columna, text, word + text[self.counter])
             elif re.search(r"[ \t]", text[self.counter]):
+                self.states.append(["char",text[self.counter]])
                 return self.simple_string_state(linea, columna, text, word + text[self.counter])
             elif re.search(r"[\']", text[self.counter]):
+                self.states.append(["char",text[self.counter]])
                 return self.simple_string_final_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'cadena simple con error', word]
@@ -304,6 +387,7 @@ class lex_CSS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
+            self.states.append(["char_aceptacion",word])
             return [linea, columna, 'string',  word]
 #----------------------------------------------------------------------------------------------------------------------------
     def double_string_state(self,linea, columna, text, word):
@@ -313,13 +397,18 @@ class lex_CSS():
         if self.counter < len(text):
             if re.search(r"(.|\s)*[^\"]", text[self.counter]):
                 if re.search(r"[\n]", text[self.counter]):
+                    self.states.append(["estadoError_string",text[self.counter]])
                     self.errors.append([self.line, self.column, word])
+
                     return [None,None,None,None]
+                self.states.append(["string",text[self.counter]])
                 return self.double_string_state(linea, columna, text, word + text[self.counter])
 
             elif re.search(r"[ \t]", text[self.counter]):
+                self.states.append(["string",text[self.counter]])
                 return self.double_string_state(linea, columna, text, word + text[self.counter])
             elif re.search(r"[\"]", text[self.counter]):
+                self.states.append(["string",text[self.counter]])
                 return self.double_string_final_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'cadena doble con error', word]
@@ -331,6 +420,7 @@ class lex_CSS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
+            self.states.append(["string_aceptacion",word])
             return [linea, columna, 'string',  word]
 #----------------------------------------------------------------------------------------------------------------------------
 
@@ -347,6 +437,7 @@ class lex_CSS():
         tokens = self.initial_state(self.cadena)
         self.verification_reserved(tokens)
         counter = 0
+        state_counter = 0
         for token in tokens:
             self.token_output.append(token)
             if(token[0]!=None):
@@ -356,6 +447,10 @@ class lex_CSS():
             counter+=1          
             self.error_output.append(error)          
             self.error_list[len(self.error_output)] = {'count':str(counter), 'column':str(error[1]) ,"line":str(error[0]),'Descripcion':str(error[2])}
+        for state in self.states:
+            state_counter+=1
+            self.state_output.append(state)                 
+            self.state_list[len(self.state_output)] = {'count':str(state_counter), 'estado':str(state[0]) ,"token":str(state[1])}
 #----------------------------------------------------------------------------------------------------------------------------
 
         
