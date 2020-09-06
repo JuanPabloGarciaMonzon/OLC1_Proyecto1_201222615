@@ -6,6 +6,7 @@ import Lexico_JS
 import Lexico_RMT
 from error_report import errorList
 from css_report import stateList
+from rmt_report import rmtList
 from Sintactico_RMT import syn_RMT
 from Lexico_CSS import lex_CSS
 from Lexico_HTML import lex_HTML
@@ -68,6 +69,7 @@ class Interfaz(tk.Frame):
 
         report_dropdown.add_command(label="Errores Lexicos", command=self.errorReport)
         report_dropdown.add_command(label="Reporte de Estados", command=self.state_report)
+        report_dropdown.add_command(label="Reporte de RMT", command=self.rmt_report)
         
         help_dropdown.add_command(label="Acerca de", command=self.about)
         help_dropdown.add_command(label="Manual de Usuario", command=self.m_user)
@@ -185,7 +187,7 @@ class Interfaz(tk.Frame):
             self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
             self.terminal.insert(tk.END,str(html.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
             self.error(html.error_list,"HTML")
-            self.pintarHTML(html.token_output)
+            self.pintar(html.token_output)
             if(str(txt).__contains__("PATHW:")):
                 self.get_direction("PATHW:",html.clean)
                 if(str(txt).__contains__("PATHL:")):
@@ -199,9 +201,9 @@ class Interfaz(tk.Frame):
             self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
             self.terminal.insert(tk.END,str(rmt.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
             #self.error(rmt.error_list,"RMT")
-            print(rmt.token_output)
-            self.pintar(rmt.token_output)
-            syn = syn_RMT(rmt.token_output) 
+            self.pintarRMT(rmt.token_output)
+            syn = syn_RMT(rmt.token_output)
+            self.rmt_lines(syn.errorList,"RMT")
 
 
         else:
@@ -389,7 +391,26 @@ class Interfaz(tk.Frame):
         else:
             box_tilte = "Report Error"
             box_msg = "El archivo del reporte no existe"
-            messagebox.showinfo(box_tilte, box_msg)       
+            messagebox.showinfo(box_tilte, box_msg)
+
+    def rmt_lines(self,entrada,tipo):
+        if(len(entrada)==0):
+            box_tilte = "Reporte de RMT"
+            box_msg = "No existe ninguna linea"
+            messagebox.showinfo(box_tilte, box_msg)
+
+        else:
+            rmtList(entrada,tipo)
+
+    def rmt_report(self):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        direction = script_dir + "/rmt.html"
+        if(os.path.exists(direction)):
+            webbrowser.open_new(r'file://' + direction)
+        else:
+            box_tilte = "Report Error"
+            box_msg = "El archivo del reporte no existe"
+            messagebox.showinfo(box_tilte, box_msg)        
 #-------------------------------------------------------Paint Words---------------------------------------------------------------------       
     def pintar(self,token):
         for last in token:
@@ -439,7 +460,7 @@ class Interfaz(tk.Frame):
             else:
                 pass
 
-    def pintarHTML(self,token):
+    def pintarRMT(self,token):
         for last in token:
             if(last[0]!=None):
                 if(last[2]=="reservada"):
@@ -478,10 +499,37 @@ class Interfaz(tk.Frame):
                     posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                     self.text.tag_add('comment', posicionInicial, posicionFinal)
 
-                elif(last[2].lower()=="operador"):
+                elif(last[2].upper()=="PARA"):
                     posicionInicial = f'{last[0]}.{last[1]-1}'
                     posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                     self.text.tag_add('operator', posicionInicial, posicionFinal)
+
+                elif(last[2].upper()=="PARC"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('operator', posicionInicial, posicionFinal)
+
+                elif(last[2].upper()=="POR"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('operator', posicionInicial, posicionFinal)
+
+                elif(last[2].upper()=="DIV"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('operator', posicionInicial, posicionFinal)
+
+                elif(last[2].upper()=="MAS"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('operator', posicionInicial, posicionFinal)
+
+                elif(last[2].upper()=="MENOS"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('operator', posicionInicial, posicionFinal)
+
+                
                 else:
                     pass
             else:

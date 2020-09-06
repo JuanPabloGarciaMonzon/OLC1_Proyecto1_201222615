@@ -28,7 +28,7 @@ class lex_RMT():
         listaTokens = []
 
         while self.counter < len(text):
-            if re.search(r"[A-Za-z]", text[self.counter]): #IDENTIFICADOR
+            if re.search(r"[A-Za-z\_]", text[self.counter]): #IDENTIFICADOR
                 listaTokens.append(self.identifier_state(self.line,self.column,text, text[self.counter]))
             elif re.search(r"[0-9]", text[self.counter]): #NUMERO
                 listaTokens.append(self.number_state(self.line, self.column, text, text[self.counter]))
@@ -50,7 +50,7 @@ class lex_RMT():
                 for clave in self.signs:
                     valor = self.signs[clave]
                     if re.search(valor, text[self.counter]):
-                        listaTokens.append([self.line, self.column, "operador", valor.replace('\\','')])
+                        listaTokens.append([self.line, self.column,clave, valor.replace('\\','')])
                         self.counter += 1
                         self.column += 1
                         isSign = True
@@ -66,7 +66,7 @@ class lex_RMT():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[a-zA-Z_0-9]", text[self.counter]):#IDENTIFICADOR
+            if re.search(r"[a-zA-Z_0-9\_]", text[self.counter]):#IDENTIFICADOR
                 return self.identifier_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'identificador', word]

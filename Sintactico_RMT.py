@@ -1,8 +1,10 @@
+
 import os
 import re
-from Lexico_RMT import lex_RMT
 
-#     #  S->E
+#     #  S->E R
+      #  R-> E R
+      #    |EPSILON
 #     #' E-> T EP
 #     #' EP-> + T EP
 #     #'    | - T EP
@@ -19,102 +21,149 @@ from Lexico_RMT import lex_RMT
 
 class syn_RMT():
 
-#     def S(self):
-#         #Mandar a llamar a E
+    def S(self):
+        #Mandar a llamar a E
+        self.E()
+        self.R()
 
-#     def E(self):
-#         #Mandar a llamar a T 
-#         #Mandar a llamar a EP
+    def R(self):
+        self.tokenAt = self.list[self.contadorT]
+        if(self.contadorT != len(self.list)-1):            
+            if(self.tokenAt[2]=="salto" and self.flag == True):
+                self.line.append([self.string,"incorrecto"])
+                self.string=""
+                self.tokenAt = self.nextToken()                
+                print("ERROR")
+                self.flag = False
+                self.E()
+                self.R()
 
-#     def EP(self):
-#         #Miro mi token actual
-#         #if(tokenActual == +):
-#             #tokenA = token_output[self.contadorT]
-#             #match(+)
-#             #T
-#             #EP
-#         #elif (tokenActual == -)
-#             #tokenA = token_output[self.contadorT]
-#             #match(-)
-#             #T
-#             #EP
-#         else:
-#             pass 
+            elif(self.tokenAt[2] =="salto" and self.flag == False):
+                print(self.string)
+                self.line.append([self.string,"correcto"])
+                self.string=""
+                self.match(self.tokenAt,"salto","SE ESPERABA SALTO")                
+                print("CORRECTO")
+                self.E()
+                self.R()
+
+            elif(self.tokenAt[2] =="MAS" or self.tokenAt[2] =="MENOS" or self.tokenAt[2] =="POR" or self.tokenAt[2] =="DIV"):
+                self.E()
+                self.R()
+                
+            else:
+                self.match(self.tokenAt,"MAS","SE ESPERABA SIMBOLO OPERADOR")
+                self.E()
+                self.R()
+        else:
+            pass
+
+
+
+    def E(self):
+        #Mandar a llamar a T
+        self.tokenAt = self.list[self.contadorT]       
+        if(self.tokenAt[2] == "integer" or self.tokenAt[2] == "identificador"  or self.tokenAt[2] == "decimal" or self.tokenAt[2]=="PARA"):
+            self.T()
+            self.EP()
+        else:
+            self.match(self.tokenAt,"integer","SE ESPERABA NUMERO O PARA")
+
+
+
+    def EP(self):
+        #Miro mi token actual
+        self.tokenAt = self.list[self.contadorT]    
+        if(self.tokenAt[2] == "MAS"):
+            self.match(self.tokenAt,"MAS","SE ESPERABA MAS")
+            self.T()
+            self.EP()
+        elif(self.tokenAt[2] =="MENOS"):
+            self.match(self.tokenAt,"MENOS","SE ESPERABA MENOS")
+            self.T()
+            self.EP()
+        else:
+            pass 
             
-#     def T(self):
-#             #F
-#             #TP
+    def T(self):
+        #' T->F TP
+        #Mandar a llamar a F
+        self.F()
+        #Mandar a llamar a TP
+        self.TP()
 
-#     def TP(self):
-#         #Miro mi token actual
-#         #if(tokenActual == *):
-#             #tokenA = token_output[self.contadorT]
-#             #match(*)
-#             #T
-#             #EP
-#         #elif (tokenActual == /)
-#             #tokenA = token_output[self.contadorT]
-#             #match(/)
-#             #T
-#             #EP
-#         #else:
-#             #pass 
+    def TP(self):
+        #Miro mi token actual
+        self.tokenAt= self.list[self.contadorT]
+        if(self.tokenAt[2] == "POR"):
+            self.match(self.tokenAt,"POR","SE ESPERABA POR")
+            self.T()
+            self.EP()
+        elif (self.tokenAt[2] == "DIV"):
+            self.match(self.tokenAt,"DIV","SE ESPERABA DIV")
+            self.T()
+            self.EP()
+        else:
+            pass 
             
 
-#     def F(self):
-#         #Miro mi token actual
-#         #if(tokenActual == ( ):
-#             #tokenA = token_output[self.contadorT]
-#             #match(PARA)
-#             #E
-#             #tokenA = token_output[self.contadorT]
-#             #match(PARC)
-#             #SL
-#         #elif (tokenActual == Numero)
-#             #tokenA = token_output[self.contadorT]
-#             #match(Numero)
-#             #SL
-#         #elif (tokenActual == ID)
-#             #tokenA = token_output[self.contadorT]
-#             #match(ID)
-#             #SL
+    def F(self):
+        #Miro mi token actual
+        self.tokenAt = self.list[self.contadorT]
+        if(self.tokenAt[2] == "PARA"):
+            self.match(self.tokenAt,"PARA","SE ESPERABA PARA")
+            self.E()
+            self.match(self.tokenAt,"PARC","SE ESPERABA PARC")
+            #self.SL()
+        elif (self.tokenAt[2] == "integer"):
+            self.match(self.tokenAt,"integer","SE ESPERABA NUMERO")
+            #self.SL()
+        elif (self.tokenAt[2] == "decimal"):
+            self.match(self.tokenAt,"decimal","SE ESPERABA NUMERO")
+            #self.SL()
+        elif (self.tokenAt[2]== "identificador"):
+            self.match(self.tokenAt,"identificador","SE ESPERABA ID")
+            #self.SL()
+        else:
+            self.match(self.tokenAt,"integer","SE ESPERABA NUMERO O PARA")   
 
 
-#     def SL(self):
-#         #if(tokenA = \n):
-#         #tokenA = token_output[self.contadorT]
-#         #match(\n)
-#         #if(Flag):
-#             #Error
-#         #else:
-#             #limpia
-#         #flag = False
-#         #else:
-#         #pass
+    def SL(self):
+        self.tokenAt = self.list[self.contadorT]
+        if(self.tokenAt[2] =="salto"):
+            print(self.string)
+            self.line.append([self.string,"correcto"])
+            self.string=""
+            self.match(self.tokenAt,"salto","SE ESPERABA SALTO")
+            self.flag = False
+            print("CORRECTO")
+            self.E()
+        else:
+            pass
 
-#     def match(self,tokenA,simboloE,MensajeErr):
-#         #if(tokenA == simboloE):
-#             #nextToken
-#             #print(Correcto)
-#         #else:
-#             #errorsyn=linea,columna,mensajeErr,lexema,tipoE
-#             #errorSin.append(errorSyn)
-#             #panic
+    def match(self,tokenAt,simboloE,MensajeErr):
+        if(tokenAt[2] == simboloE):
+            self.nextToken()
+        else:                   
+            self.error.append([tokenAt[0],tokenAt[1],MensajeErr,tokenAt[2],tokenAt[3]])
+            self.panic()
 
-#     def nextToken(self):
-#             #if(contadorT!=len(token_output)):
-#                 #contadorT++
-#             #return token_output[self.contadorT]
+    def nextToken(self):
+            tokenAt2 = self.list[self.contadorT]
+            if(tokenAt2[2]!="salto"):
+                self.string = self.string + tokenAt2[3]
+            if(self.contadorT != len(self.list)-1):
+                self.contadorT=self.contadorT + 1
+                self.tokenAt = self.list[self.contadorT]
+                return self.tokenAt
 
-#     def panic(self):
-#             #flag = True
-#             #tokenA = token_output[self.contadorT]
-#             #while(tokenA!=\n):
-#                 #tokenA = netToken()
-#                 #if(contadorA==len(token_out)):
-#                     #break
-#                 #else:
-#                     #pass
+    def panic(self):
+            self.flag = True
+            self.tokenAt = self.list[self.contadorT]
+            while(self.tokenAt[2]!="salto"):
+                self.tokenAt = self.nextToken()
+                if(self.contadorT==len(self.list)-1):
+                    break
 
 
 
@@ -122,10 +171,20 @@ class syn_RMT():
     def __init__(self,lista):
     #print(re.match(rmt.signs.get("PARA"),"("))
     #Variable que se usa como índice para recorrer la lista de Tokens
-        self.numPreanalisis = 0
     #Lista de Tokens que el parser recibe del analizador léxico
-        self.signs = lex_RMT()
         self.list = lista
-        self.receive_input()
         self.contadorT = 0
+        self.contador = 0
         self.flag = False
+        self.error = []
+        self.line = []
+        self.aux = []
+        self.errorList = {}
+        self.tokenAt = ""
+        self.string = ""
+        self.S()
+        for l in self.line:
+            self.contador+=1
+            self.aux.append(l)                 
+            self.errorList[len(self.aux)] = {'count':str(self.contador), 'linea':str(l[0]) ,"resultado":str(l[1])}
+        print(self.errorList)
