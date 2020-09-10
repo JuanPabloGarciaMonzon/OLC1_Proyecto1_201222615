@@ -13,11 +13,10 @@ import re
 #     #' TP-> * F TP
 #     #'    | / F TP
 #     #'    | EPSILON
-#     #' F->  (E) SL 
-#     #'    | NUMERO SL
-#     #     | ID SL 
-#     # SL->\n
-#     #    |EPSILON 
+#     #' F->  (E) 
+#     #'    | NUMERO 
+#     #     | ID  
+
 
 class syn_RMT():
 
@@ -114,32 +113,19 @@ class syn_RMT():
             self.match(self.tokenAt,"PARA","SE ESPERABA PARA")
             self.E()
             self.match(self.tokenAt,"PARC","SE ESPERABA PARC")
-            #self.SL()
+            
         elif (self.tokenAt[2] == "integer"):
             self.match(self.tokenAt,"integer","SE ESPERABA NUMERO")
-            #self.SL()
+            
         elif (self.tokenAt[2] == "decimal"):
             self.match(self.tokenAt,"decimal","SE ESPERABA NUMERO")
-            #self.SL()
+            
         elif (self.tokenAt[2]== "identificador"):
             self.match(self.tokenAt,"identificador","SE ESPERABA ID")
-            #self.SL()
+            
         else:
             self.match(self.tokenAt,"integer","SE ESPERABA NUMERO O PARA")   
 
-
-    def SL(self):
-        self.tokenAt = self.list[self.contadorT]
-        if(self.tokenAt[2] =="salto"):
-            print(self.string)
-            self.line.append([self.string,"correcto"])
-            self.string=""
-            self.match(self.tokenAt,"salto","SE ESPERABA SALTO")
-            self.flag = False
-            print("CORRECTO")
-            self.E()
-        else:
-            pass
 
     def match(self,tokenAt,simboloE,MensajeErr):
         if(tokenAt[2] == simboloE):

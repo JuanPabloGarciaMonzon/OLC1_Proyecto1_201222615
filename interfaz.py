@@ -14,26 +14,28 @@ from Lexico_HTML import lex_HTML
 import webbrowser
 #Interface toolkit of python tk interface
 import tkinter as tk
-from tkinter import filedialog, simpledialog
+from tkinter import filedialog
 from tkinter import messagebox
 
-#Handmade classes
 #Custom text is for painting colors in a text area
 from CustomText import CustomText
 #For managing the Line Numbers in the text area
 from TextLine import TextLineNumbers
 
 class Interfaz(tk.Frame):
-    ejecutar = None    
     def __init__(self, *args, **kwargs):
         self.root = root
         tk.Frame.__init__(self, *args, **kwargs)
 
-        self.tipoAnalizador = True
         self.filename = None
 
         self.terminal = tk.Text(root, width=45, height=1, background="black",foreground="#00AA00")
         self.terminal.pack(side="right", fill="both", expand=True)
+
+        # Special Text
+        self.ter = tk.Scrollbar(orient="vertical", command=self.terminal.yview)
+        self.terminal.configure(yscrollcommand=self.ter.set)
+        self.ter.pack(side="right", fill="y")
 
         # Special Text
         self.text = CustomText(self)
@@ -67,9 +69,10 @@ class Interfaz(tk.Frame):
 
         run_dropdown.add_command(label="Ejecutar", command=self.verify_path)
 
-        report_dropdown.add_command(label="Errores Lexicos", command=self.errorReport)
-        report_dropdown.add_command(label="Reporte de Estados", command=self.state_report)
-        report_dropdown.add_command(label="Reporte de RMT", command=self.rmt_report)
+        report_dropdown.add_command(label="Reporte de Errores Lexicos", command=self.errorReport)
+        report_dropdown.add_command(label="Reporte de Grafos de JS", command=self.js_report)
+        report_dropdown.add_command(label="Reporte de Estados de CSS", command=self.state_report)
+        report_dropdown.add_command(label="Reporte de Errores Sintacticos de RMT", command=self.rmt_report)
         
         help_dropdown.add_command(label="Acerca de", command=self.about)
         help_dropdown.add_command(label="Manual de Usuario", command=self.m_user)
@@ -145,9 +148,8 @@ class Interfaz(tk.Frame):
         rmt = Lexico_RMT.lex_RMT()
         css = lex_CSS()
         html = lex_HTML()
-        self.terminal.delete(1.0, tk.END)
         txt = self.text.get(1.0, tk.END)
-
+        self.terminal.delete(1.0, tk.END)
         if(entrada == "JS"):
             sys.setrecursionlimit(100000)                                                    
             js.cadena = txt
@@ -178,8 +180,7 @@ class Interfaz(tk.Frame):
                 if(str(txt).__contains__("PATHL:")):
                     self.get_direction("PATHL:",css.clean)
 
-        elif(entrada == "HTML"):     
-                                 
+        elif(entrada == "HTML"):                                      
             html.cadena = txt
             html.receive_input()        
             self.terminal.insert(tk.INSERT,"----------------------------------------Tokens--------------------------------\n")
@@ -200,11 +201,10 @@ class Interfaz(tk.Frame):
             self.terminal.insert(tk.END,str(rmt.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
             self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
             self.terminal.insert(tk.END,str(rmt.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
-            #self.error(rmt.error_list,"RMT")
-            self.pintarRMT(rmt.token_output)
+            self.error(rmt.error_list,"RMT")
+            self.pintar(rmt.token_output)
             syn = syn_RMT(rmt.token_output)
             self.rmt_lines(syn.errorList,"RMT")
-
 
         else:
             box_tilte ="Execution Error"
@@ -218,32 +218,22 @@ class Interfaz(tk.Frame):
 
     def m_user(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/WS.pdf" 
-        if (os.path.exists(direction)):
-            try:
-                webbrowser.open_new(r'file://'+direction)
-            except Exception as e:
-                box_tilte ="Path Error"
-                box_msg = "El archivo que trata de acceder no existe"
-                messagebox.showerror(box_tilte,box_msg)
-        else:
-            box_tilte ="New Path Error"
-            box_msg = "La ruta no existe"
+        direction = script_dir + "/Manuales/Manual de Usuario.pdf" 
+        try:
+            webbrowser.open_new(r'file://'+direction)
+        except Exception as e:
+            box_tilte ="Path Error"
+            box_msg = "El archivo que trata de acceder no existe"
             messagebox.showerror(box_tilte,box_msg)
         
     def m_tecnic(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/WS.pdf"
-        if (os.path.exists(direction)):
-            try:
-                webbrowser.open_new(r'file://'+direction)
-            except Exception as e:
-                box_tilte ="Path Error"
-                box_msg = "El archivo que trata de acceder no existe"
-                messagebox.showerror(box_tilte,box_msg)
-        else:
-            box_tilte ="New Path Error"
-            box_msg = "La ruta no existe"
+        direction = script_dir + "/Manuales/Manual Tecnico.pdf"
+        try:
+            webbrowser.open_new(r'file://'+direction)
+        except Exception as e:
+            box_tilte ="Path Error"
+            box_msg = "El archivo que trata de acceder no existe"
             messagebox.showerror(box_tilte,box_msg)
 #-------------------------------------------------------Descision Module Methods---------------------------------------------------------------------
     def verify_path(self):
@@ -288,24 +278,20 @@ class Interfaz(tk.Frame):
             if(txt.__contains__("PATHW: ")):
                 path = txt.split("PATHW: ")                
                 direction = path[1].split("\n")
-                print(direction[0].replace("*/",""))
                 self.create_file(direction[0].replace("*/",""),clean)
 
             elif(txt.__contains__("PATHW:")):
                 path = txt.split("PATHW:")
                 direction = path[1].split("\n")
-                print(direction[0].replace("*/",""))
                 self.create_file(direction[0].replace("*/",""),clean)           
         elif(entrada == "PATHL:" and sistema == "Linux"):            
             if(txt.__contains__("PATHL: ")):
                 path = txt.split("PATHL: ")
                 direction = path[1].split("\n")
-                print(direction[0].replace("*/",""))
                 self.create_file(direction[0].replace("*/",""),clean)
             elif(txt.__contains__("PATHL:")):
                 path = txt.split("PATHL:")
                 direction = path[1].split("\n")
-                print(direction[0].replace("*/",""))
                 self.create_file(direction[0].replace("*/",""),clean)
         else:
             box_tilte ="Operative System Error"
@@ -322,7 +308,7 @@ class Interfaz(tk.Frame):
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="css"):                    
-                    fic = open(path+"fileC.css", "w")     
+                    fic = open(path+"file.css", "w")     
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="html"):                    
@@ -360,13 +346,12 @@ class Interfaz(tk.Frame):
             box_tilte = "Tabla de Errores"
             box_msg = "No existe ningun error"
             messagebox.showinfo(box_tilte, box_msg)
-
         else:
             errorList(entrada,tipo)
 
     def errorReport(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/errorList.html"
+        direction = script_dir + "/Reportes/errorList.html"
         if(os.path.exists(direction)):
             webbrowser.open_new(r'file://' + direction)
         else:
@@ -379,13 +364,12 @@ class Interfaz(tk.Frame):
             box_tilte = "Reporte de estados"
             box_msg = "No existe ningun estado"
             messagebox.showinfo(box_tilte, box_msg)
-
         else:
             stateList(entrada,tipo)
 
     def state_report(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/css_states.html"
+        direction = script_dir + "/Reportes/css_states.html"
         if(os.path.exists(direction)):
             webbrowser.open_new(r'file://' + direction)
         else:
@@ -404,13 +388,26 @@ class Interfaz(tk.Frame):
 
     def rmt_report(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/rmt.html"
+        direction = script_dir + "/Reportes/rmt.html"
         if(os.path.exists(direction)):
             webbrowser.open_new(r'file://' + direction)
         else:
             box_tilte = "Report Error"
             box_msg = "El archivo del reporte no existe"
-            messagebox.showinfo(box_tilte, box_msg)        
+            messagebox.showinfo(box_tilte, box_msg)
+
+    def js_report(self):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        String = script_dir + "/Grafos/String.gv.pdf"
+        Unicomentario = script_dir + "/Grafos/UniComentario.gv.pdf"
+        ID = script_dir + "/Grafos/ID.gv.pdf"
+        try:
+            webbrowser.open_new(r'file://' + String)
+            webbrowser.open_new(r'file://' + Unicomentario)
+            webbrowser.open_new(r'file://' + ID)
+        except Exception as e:
+            box_tilte = "Report Error"
+            messagebox.showinfo(box_tilte, e)           
 #-------------------------------------------------------Paint Words---------------------------------------------------------------------       
     def pintar(self,token):
         for last in token:
@@ -425,8 +422,12 @@ class Interfaz(tk.Frame):
                     posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                     self.text.tag_add('var', posicionInicial, posicionFinal)
 
-
                 elif(last[2].lower()=="string"):
+                    posicionInicial = f'{last[0]}.{last[1]-1}'
+                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
+                    self.text.tag_add('string', posicionInicial, posicionFinal)
+
+                elif(last[2].lower()=="TAG"):
                     posicionInicial = f'{last[0]}.{last[1]-1}'
                     posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                     self.text.tag_add('string', posicionInicial, posicionFinal)
@@ -455,49 +456,6 @@ class Interfaz(tk.Frame):
                     posicionInicial = f'{last[0]}.{last[1]-1}'
                     posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                     self.text.tag_add('operator', posicionInicial, posicionFinal)
-                else:
-                    pass
-            else:
-                pass
-
-    def pintarRMT(self,token):
-        for last in token:
-            if(last[0]!=None):
-                if(last[2]=="reservada"):
-                    posicionInicial = f'{last[0]}.{last[1]-1}'
-                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
-                    self.text.tag_add('reserved', posicionInicial, posicionFinal)
-
-                elif(last[3].lower()=="var"):
-                    posicionInicial = f'{last[0]}.{last[1]-1}'
-                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
-                    self.text.tag_add('var', posicionInicial, posicionFinal)
-
-
-                elif(last[2].lower()=="string"):
-                    posicionInicial = f'{last[0]}.{last[1]-1}'
-                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
-                    self.text.tag_add('string', posicionInicial, posicionFinal)
-
-                elif(last[2].lower()=="integer"):
-                    posicionInicial = f'{last[0]}.{last[1]-1}'
-                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
-                    self.text.tag_add('int', posicionInicial, posicionFinal)
-
-                elif(last[2].lower()=="decimal"):
-                    posicionInicial = f'{last[0]}.{last[1]-1}'
-                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
-                    self.text.tag_add('int', posicionInicial, posicionFinal)
-
-                elif(last[3].lower()=="true" or last[3].lower()=="false"):
-                    posicionInicial = f'{last[0]}.{last[1]-1}'
-                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
-                    self.text.tag_add('boolean', posicionInicial, posicionFinal)
-
-                elif(last[2].lower()=="comentario"):
-                    posicionInicial = f'{last[0]}.{last[1]-1}'
-                    posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
-                    self.text.tag_add('comment', posicionInicial, posicionFinal)
 
                 elif(last[2].upper()=="PARA"):
                     posicionInicial = f'{last[0]}.{last[1]-1}'
@@ -529,7 +487,6 @@ class Interfaz(tk.Frame):
                     posicionFinal = f'{posicionInicial}+{len(str(last[3]))}c'
                     self.text.tag_add('operator', posicionInicial, posicionFinal)
 
-                
                 else:
                     pass
             else:

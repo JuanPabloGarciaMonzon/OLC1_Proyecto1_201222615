@@ -1,33 +1,9 @@
-/*PATHW:c:\hu\*/ 
-   /******************************************************************
- * ============================================================= *
- * ============================================================== *
- * ============================================================== *
- * ===================ARCHIVO DE PRUEBA DE JS==================== *
- * ============================================================== *
- * ================PATHL -> /home/user/output/js/================ *
- * =================PATHW -> c:\user\output\js\================== *
- * ============================================================== *
- * ============================================================== *
- * ============================================================== *
- ******************************************************************/
- /*********************************************
- * Dentro de un archivo de tipo javascript *
- * pueden encontrarse comentarios de tipo *
- * multilinea o de tipo unilinea, estos *
- * pueden aparecer en cualquier parte del *
- * archivo de entrada tomando en cuenta que, *
- * el primero es el que contiene el path del *
- * directorio al cual se enviara la salida *
- * ya analizada y limpiada. *
- *********************************************/
-    html,body{
- ï¿½      margin:0;
+/* PATHW: c:/jj/ */   
+html,body{
+ ¬      margin:0;
         padding:0
     }
-    /*
-            Entrada archivo css
-    */
+    /*Entrada archivo css*/
     body{font: 76% ari*al,sans-serif; 
         background-image: url("/home/documents/picture.png");
         background: 0 0 0 0.2rem
@@ -67,7 +43,7 @@
         margin-left:-100%
     }
     div#extra{
-        float:left;/* :) */width:25%;
+        float:left;/* :) */ width:25%;
         margin-left:-25%
     }
     div#footer{
@@ -81,8 +57,6 @@
         clear:left;
         width:100% * 180 / 190.5px + 5;
     }
-ï¿½
-/* y acï¿½ :'(
-/*asassasasas
-
+°
+/* y acá :'(
 

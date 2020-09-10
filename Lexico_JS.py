@@ -1,6 +1,8 @@
 import os
 import platform
 import re
+import Grafo
+
 class lex_JS():
     
     def __init__(self): 
@@ -20,50 +22,54 @@ class lex_JS():
         "class", "function","constructor"]
 
         self.signs = {
-        "PUNTOCOMA":';', 
-        "COMA":',', 
-        "LLAVEA":'{', 
-        "LLAVEC":'}', 
-        "PARA":'\(',
-        "POR":'\*', 
-        "PARC":'\)', 
-        "PUNTO":'\.',
-        "DPUNTO":':'}
+        "PUNTOCOMA":'\;', "COMA":'\,', "LLAVEA":'\{', "LLAVEC":'\}', 
+        "PARA":'\(',"POR":'\*', "PARC":'\)', "PUNTO":'\.',"DPUNTO":'\:',"MAS":'\+',"MENOS":'\-'}
 
     def initial_state(self,text):
-
         self.line = 1
         self.column = 1
+        self.flag_id = False
+        self.flag_comment = False
+        self.flag_multicomment = False
+        self.flag_string = False
+        self.flag_decimal = False
+        self.flag_number = False
+        self.flag_char = False
         listaTokens = []
 
         while self.counter < len(text):
             if re.search(r"[A-Za-z\_]", text[self.counter]): #IDENTIFICADOR
                 listaTokens.append(self.identifier_state(self.line,self.column,text, text[self.counter]))
+
             elif re.search(r"[0-9]", text[self.counter]): #NUMERO
                 listaTokens.append(self.number_state(self.line, self.column, text, text[self.counter]))
-            elif re.search(r"[\']", text[self.counter]): #CADENA
+
+            elif re.search(r"[\']", text[self.counter]): #CHAR
                 listaTokens.append(self.simple_string_state(self.line, self.column, text, text[self.counter]))
-            elif re.search(r"[\"]", text[self.counter]): #CADENA
-                listaTokens.append(self.double_string_state(self.line, self.column, text, text[self.counter]))          
+
+            elif re.search(r"[\"]", text[self.counter]): #STRING
+                listaTokens.append(self.double_string_state(self.line, self.column, text, text[self.counter]))
+
             elif re.search(r"[<]", text[self.counter]): #MENOR  O MENOR IGUAL QUE
                 listaTokens.append(self.below_state(self.line, self.column, text, text[self.counter]))
+
             elif re.search(r"[>]", text[self.counter]): #MAYOR  O MAYOR IGUAL QUE
                 listaTokens.append(self.above_state(self.line, self.column, text, text[self.counter]))
+
             elif re.search(r"[=]", text[self.counter]): #IGUAL o IGUALDAD
                 listaTokens.append(self.equal_state(self.line, self.column, text, text[self.counter]))
+            
             elif re.search(r"[!]", text[self.counter]): #NOT o DIFERENCIA
                 listaTokens.append(self.not_state(self.line, self.column, text, text[self.counter]))
-            elif re.search(r"[+]", text[self.counter]): #MAS O INCREMENTO
-                listaTokens.append(self.plus_state(self.line, self.column, text, text[self.counter]))
-            elif re.search(r"[-]", text[self.counter]): #MENOS O DECREMENTO
-                listaTokens.append(self.substracion_state(self.line, self.column, text, text[self.counter]))
+            
             elif re.search(r"[&]", text[self.counter]): #CONJUNCION
                 listaTokens.append(self.amperson_state(self.line, self.column, text, text[self.counter]))
+            
             elif re.search(r"[|]", text[self.counter]): #DISYUNCION
                 listaTokens.append(self.pipe_state(self.line, self.column, text, text[self.counter]))
+            
             elif re.search(r"[/]", text[self.counter]): #DIVISION
                 listaTokens.append(self.div_state(self.line, self.column, text, text[self.counter]))
-                #listaTokens.append(self.B_state(self.line, self.column, text, text[self.counter]))
 
             elif re.search(r"[\n]", text[self.counter]):#SALTO DE LINEA
                 self.counter += 1
@@ -73,9 +79,10 @@ class lex_JS():
             elif re.search(r"[ \t]", text[self.counter]):#ESPACIOS Y TABULACIONES
                 self.counter += 1
                 self.column += 1
-            elif re.search(r"[\r]", text[self.counter]):#ESPACIOS Y TABULACIONES
+                listaTokens.append([self.line, self.column, "espacio", "\t"])
+            elif re.search(r"[\r]", text[self.counter]):#CARREO
                 self.counter += 1
-                self.column += 1  
+                self.column += 1
             else:
             #SIGNOS
                 isSign = False
@@ -93,20 +100,21 @@ class lex_JS():
                     self.counter += 1
         return listaTokens
 #----------------------------------------------------------------------------------------------------------------------------
-
     def identifier_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
+        IDr = Grafo.grafica()
         if self.counter < len(text):
             if re.search(r"[a-zA-Z_0-9]", text[self.counter]):#IDENTIFICADOR
                 return self.identifier_state(linea, columna, text, word + text[self.counter])
             else:
+                if(self.flag_id==False):
+                    IDr.grafoID()
+                    self.flag_id=True                    
                 return [linea, columna, 'identificador', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'identificador', word]
 #----------------------------------------------------------------------------------------------------------------------------
-
     def below_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
@@ -116,7 +124,7 @@ class lex_JS():
                 return self.below_equal_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
+                
         else:
             return [linea, columna, 'operador', word]
 
@@ -128,7 +136,7 @@ class lex_JS():
                 return self.below_equal_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
+                
         else:
             return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
@@ -136,16 +144,12 @@ class lex_JS():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[&]", text[self.counter]):#CONJUNCION
-                
+            if re.search(r"[&]", text[self.counter]):#CONJUNCION               
                 return self.conjuction_state(linea, columna, text, word + text[self.counter])
             else:
-                self.errors.append([self.line, self.column, word])
-                return [None,None,None,None]
-                #agregar automata de identificador en el arbol, con el valor
+                return [linea, columna, 'operador', word]
         else:
-            self.errors.append([self.line, self.column, word])
-            return [None,None,None,None]
+            return [linea, columna, 'operador', word]
 
     def conjuction_state(self,linea, columna, text, word):
         self.counter += 1
@@ -153,59 +157,18 @@ class lex_JS():
         if self.counter < len(text):
             return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
-
     def pipe_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[|]", text[self.counter]):#CONJUNCION
-                
+            if re.search(r"[|]", text[self.counter]):#CONJUNCION                
                 return self.disyunction_state(linea, columna, text, word + text[self.counter])
             else:
-                self.errors.append([self.line, self.column, word])
-                return [None,None,None,None]
-                #agregar automata de identificador en el arbol, con el valor
+                return [linea, columna, 'operador', word]
         else:
-            self.errors.append([self.line, self.column, word])
-            return [None,None,None,None]
+            return [linea, columna, 'operador', word]
 
     def disyunction_state(self,linea, columna, text, word):
-        self.counter += 1
-        self.column += 1
-        if self.counter < len(text):
-            return [linea, columna, 'operador', word]
-#----------------------------------------------------------------------------------------------------------------------------  
-    def plus_state(self,linea, columna, text, word):
-        self.counter += 1
-        self.column += 1
-        if self.counter < len(text):
-            if re.search(r"[+]", text[self.counter]):#MENOR O IGUAL QUE                
-                return self.increment_state(linea, columna, text, word + text[self.counter])
-            else:
-                return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
-        else:
-            return [linea, columna, 'operador', word]
-
-    def increment_state(self,linea, columna, text, word):
-        self.counter += 1
-        self.column += 1
-        if self.counter < len(text):
-            return [linea, columna, 'operador', word]
-#----------------------------------------------------------------------------------------------------------------------------
-    def substracion_state(self,linea, columna, text, word):
-        self.counter += 1
-        self.column += 1
-        if self.counter < len(text):
-            if re.search(r"[-]", text[self.counter]):#MENOR O IGUAL QUE               
-                return self.decrement_state(linea, columna, text, word + text[self.counter])
-            else:
-                return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
-        else:
-            return [linea, columna, 'operador', word]
-
-    def decrement_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
@@ -219,7 +182,6 @@ class lex_JS():
                 return self.above_equal_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'operador', word]
 
@@ -231,22 +193,20 @@ class lex_JS():
                 return self.above_equal_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
-
     def equal_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
             if re.search(r"[=]", text[self.counter]):#MENOR O IGUAL QUE
                 return self.equal_equal_state(linea, columna, text, word + text[self.counter])
+
             elif re.search(r"[>]", text[self.counter]):#IMPLEMENTACION
                 return self.implementation_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'operador', word]
 
@@ -262,31 +222,33 @@ class lex_JS():
         if self.counter < len(text):
             return [linea, columna, 'operador', word]
 #----------------------------------------------------------------------------------------------------------------------------
-
     def div_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
             if re.search(r"[\/]", text[self.counter]):
                 return self.uniline_state(linea, columna, text, word + text[self.counter])
-            if re.search(r"[\*]", text[self.counter]):
+
+            elif re.search(r"[\*]", text[self.counter]):
                 return self.B_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'operador', word]
-
 
     def uniline_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
+        Uni = Grafo.grafica()
         if self.counter < len(text):
             if re.search(r"(.)", text[self.counter]):
                 return self.uniline_state(linea, columna, text, word + text[self.counter])
-            elif re.search(r"[\n]", text[self.counter]):
-                return [linea, columna, 'comentario', word]
 
+            elif re.search(r"[\n]", text[self.counter]):
+                if(self.flag_comment==False):
+                    Uni.grafoUniComment()
+                    self.flag_comment=True                
+                return [linea, columna, 'comentario', word]
 
         else:
             return [linea, columna, 'comentario', word]
@@ -297,9 +259,9 @@ class lex_JS():
         if self.counter < len(text):
             if re.search(r"[\*]", text[self.counter]):
                 return self.C_state(linea, columna, text, word + text[self.counter])
+
             else:
                 return self.C_state(linea, columna, text, word + text[self.counter])
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return self.C_state(linea, columna, text, word + text[self.counter])
 
@@ -312,7 +274,6 @@ class lex_JS():
 
             else:
                 return [linea, columna, 'operador2', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'operador', word]
 
@@ -324,9 +285,9 @@ class lex_JS():
                 if re.search(r"[\*]", text[self.counter]):
                     return self.E_state(linea, columna, text, word + text[self.counter])
                 return self.D_state(linea, columna, text, word + text[self.counter])
+
             else:
                 return [linea, columna, 'operador3', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             self.errors.append([self.line, self.column, word])
             return [None,None,None,None]
@@ -339,22 +300,25 @@ class lex_JS():
                 if re.search(r"[a-zA-Z_0-9_._\=_^\/]", text[self.counter+1]):
                     return self.E_state(linea, columna, text, word + text[self.counter])
                 return self.F_state(linea, columna, text, word + text[self.counter])
+
             else:
                 if re.search(r"[\n]", text[self.counter]):                    
                     self.line+=1 
-                return self.E_state(linea, columna, text, word + text[self.counter])
-                #agregar automata de identificador en el arbol, con el valor
+                return self.E_state(linea, columna, text, word + text[self.counter])                
         else:         
             return [linea, columna, 'operador', word]
 
     def F_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
+        Multi = Grafo.grafica()
         if self.counter < len(text):
+            if(self.flag_multicomment==False):
+                Multi.grafoMultiComment()
+                self.flag_multicomment=True
+
             return [linea, columna, 'comentario',  word]
-
 #----------------------------------------------------------------------------------------------------------------------------
-
     def not_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
@@ -363,7 +327,7 @@ class lex_JS():
                 return self.difference_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
+                
         else:
             return [linea, columna, 'operador', word]
 
@@ -375,37 +339,44 @@ class lex_JS():
                 return self.above_equal_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
+                
         else:
             return [linea, columna, 'operador', word]  
 #----------------------------------------------------------------------------------------------------------------------------
-
     def number_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
+        Nmber = Grafo.grafica()
         if self.counter < len(text):
             if re.search(r"[0-9]", text[self.counter]):#ENTERO
                 return self.number_state(linea, columna, text, word + text[self.counter])
+
             elif re.search(r"\.", text[self.counter]):#DECIMAL
                 return self.decimal_state(linea, columna, text, word + text[self.counter])
+
             else:
+                if(self.flag_number==False):
+                    Nmber.grafoNumber()
+                    self.flag_number=True
+
                 return [linea, columna, 'integer', word]
-                #agregar automata de numero en el arbol, con el valor
         else:
             return [linea, columna, 'integer', word]
 
     def decimal_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
+        Deci = Grafo.grafica()
         if self.counter < len(text):
             if re.search(r"[0-9]", text[self.counter]):#DECIMAL
                 return self.decimal_state(linea, columna, text, word + text[self.counter])
             else:
+                if(self.flag_decimal==False):
+                    Deci.grafoDecimal()
+                    self.flag_decimal=True
                 return [linea, columna, 'decimal', word]
-                #agregar automata de decimal en el arbol, con el valor
         else:
             return [linea, columna, 'decimal', word]
-
 #----------------------------------------------------------------------------------------------------------------------------
     def simple_string_state(self,linea, columna, text, word):
         self.counter += 1
@@ -416,26 +387,32 @@ class lex_JS():
                     self.errors.append([self.line, self.column, word])
                     return [None,None,None,None]
                 return self.simple_string_state(linea, columna, text, word + text[self.counter])
+
             elif re.search(r"[ \t]", text[self.counter]):
                 return self.simple_string_state(linea, columna, text, word + text[self.counter])
+
             elif re.search(r"[\']", text[self.counter]):
                 return self.simple_string_final_state(linea, columna, text, word + text[self.counter])
+
             else:
                 return [linea, columna, 'cadena simple con error', word]
-                #agregar automata de identificador en el arbol, con el valor
+                
         else:
             return [linea, columna, 'cadena simple con error', word]
 
     def simple_string_final_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
+        Char = Grafo.grafica()
         if self.counter < len(text):
+            if(self.flag_char==False):
+                Char.grafoChar()
+                self.flag_char=True
             return [linea, columna, 'string',  word]
 #----------------------------------------------------------------------------------------------------------------------------
     def double_string_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
-
         if self.counter < len(text):
             if re.search(r"(.|\s)*[^\"]", text[self.counter]):
                 if re.search(r"[\n]", text[self.counter]):
@@ -445,21 +422,28 @@ class lex_JS():
 
             elif re.search(r"[ \t]", text[self.counter]):
                 return self.double_string_state(linea, columna, text, word + text[self.counter])
+
             elif re.search(r"[\"]", text[self.counter]):
                 return self.double_string_final_state(linea, columna, text, word + text[self.counter])
+
             else:
                 return [linea, columna, 'cadena doble con error', word]
-                #agregar automata de identificador en el arbol, con el valor
+                
         else:
             return [linea, columna, 'cadena doble con error', word]
 
     def double_string_final_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
+        doublestring = Grafo.grafica()
         if self.counter < len(text):
+
+            if(self.flag_string==False):
+                doublestring.grafoString()
+                self.flag_string=True
+
             return [linea, columna, 'string',  word]
 #----------------------------------------------------------------------------------------------------------------------------
-
     def verification_reserved(self,TokenList):
         for token in TokenList:
             if token[2] == 'identificador':
@@ -476,8 +460,7 @@ class lex_JS():
         for token in tokens:
             self.token_output.append(token)
             if(token[0]!=None):
-                self.clean+=" "+str(token[3])
-            # self.clean+=str(token[3])
+                self.clean+=str(token[3])
         for error in self.errors:
             counter+=1          
             self.error_output.append(error)          

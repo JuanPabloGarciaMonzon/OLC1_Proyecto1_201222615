@@ -5,7 +5,7 @@ class errorList:
         if len(list) > 0:
 
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            direction = script_dir + "/errorList.html"
+            direction = script_dir + "/Reportes/errorList.html"
             try:
                 try:
                     os.remove(direction)

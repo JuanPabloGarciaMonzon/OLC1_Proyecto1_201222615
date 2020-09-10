@@ -14,38 +14,22 @@ class lex_HTML():
         self.error_output = []
         self.error_list={}
         self.reserved = [
-        "html","head","title","body",
-        "h1","h2","h3","h4","h5","h6",
-        "p", "br","img","a","href",
-        "ol","ul","li","table","th","tr","td",
-        "caption","colgroup","col","thead","tbody",
-        "tfoot"]
-
+        "html","head","title","body","h1","h2","h3","h4","h5","h6",
+        "p", "br","img","a","href","ol","ul","li","table","th","tr","td",
+        "caption","colgroup","col","thead","tbody","tfoot"]
 
         self.signs = {
-        "PUNTOCOMA":'\;', 
-        "COMA":'\,', 
-        "LLAVEA":'\{', 
-        "LLAVEC":'\}', 
-        "PARA":'\(',
-        "POR":'\*', 
-        "PARC":'\)', 
-        "PUNTO":'\.',
-        "DPUNTO":'\:',
-        "TAGA":'\<',
-        "TAGCI":'\>',
-        "MENOS":"\-",
-        "MAS":"\+",
-        "IGUAL":"\="}
+        "PUNTOCOMA":'\;', "COMA":'\,', "LLAVEA":'\{', "LLAVEC":'\}', 
+        "PARA":'\(', "PARC":'\)', "PUNTO":'\.',"DPUNTO":'\:',
+        "TAGA":'\<',"TAGCI":'\>',"IGUAL":"\="}
 
     def initial_state(self,text):
-
         self.line = 1
         self.column = 1
         self.listaTokens = []
 
         while self.counter < len(text):
-            if re.search(r"[A-Za-z]", text[self.counter]): #IDENTIFICADOR
+            if re.search(r"[A-Za-z\_\-]", text[self.counter]): #IDENTIFICADOR
                 self.listaTokens.append(self.identifier_state(self.line,self.column,text, text[self.counter]))
             elif re.search(r"[0-9]", text[self.counter]): #NUMERO
                 self.listaTokens.append(self.number_state(self.line, self.column, text, text[self.counter]))
@@ -56,7 +40,7 @@ class lex_HTML():
             elif re.search(r"[\>]", text[self.counter]): #TAG DE CIERRE
                 self.listaTokens.append([self.line, self.column,"operador",">"])
                 self.listaTokens.append(self.tag_state(self.line, self.column, text, text[self.counter]))
-            elif re.search(r"[/]", text[self.counter]): #DIVISION
+            elif re.search(r"[\/]", text[self.counter]): #DIVISION
                 self.listaTokens.append(self.div_state(self.line, self.column, text, text[self.counter]))
                 
 
@@ -89,41 +73,32 @@ class lex_HTML():
                     self.counter += 1
         return self.listaTokens
 #----------------------------------------------------------------------------------------------------------------------------
-
     def identifier_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            if re.search(r"[a-zA-Z_0-9]", text[self.counter]):#IDENTIFICADOR
+            if re.search(r"[a-zA-Z_0-9\_]", text[self.counter]):#IDENTIFICADOR
                 return self.identifier_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'identificador', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'identificador', word]
-
 #----------------------------------------------------------------------------------------------------------------------------
     def tag_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
             if re.search(r"(.|\s)*[^\<]", text[self.counter]):
-                if re.search(r"[\n]", text[self.counter]):
+                if re.search(r"[\n]",text[self.counter]):
                     self.line+=1
-                    return self.tag_state(linea, columna, text, word + text[self.counter])
-                elif re.search(r"[ \t]", text[self.counter]):
-                    self.column+=1
-                    return self.tag_state(linea, columna, text, word + text[self.counter])
                 return self.tag_state(linea, columna, text, word + text[self.counter])
             elif re.search(r"[\<]", text[self.counter]):
                 return self.final_final_state(linea, columna, text, word + text[self.counter])
                     
             else:
                 return [None,None,None,None]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [None,None,None,None]
-
 
     def final_final_state (self,linea, columna, text, word):
         self.counter += 1
@@ -137,7 +112,6 @@ class lex_HTML():
             else:
                 self.listaTokens.append([linea,columna,"TAG",word[1:-1]])
                 return [linea, columna, 'operador',  "<"]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'operador',  word[2]]
 
@@ -145,24 +119,21 @@ class lex_HTML():
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
-            self.listaTokens.append([linea,columna,"TAG",word[1:-2]])           
+            self.listaTokens.append([linea,columna,"TAG",word[1:-2]])         
             return [linea, columna, 'operador',  "</"]
 #----------------------------------------------------------------------------------------------------------------------------
-
     def div_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
         if self.counter < len(text):
             if re.search(r"[\/]", text[self.counter]):
                 return self.uniline_state(linea, columna, text, word + text[self.counter])
-            if re.search(r"[\*]", text[self.counter]):
-                return self.multiline_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'operador', word]
-                #agregar automata de identificador en el arbol, con el valor
+                self.errors.append([self.line, self.column, word])
+                return [None,None,None,None]
         else:
-            return [linea, columna, 'operador', word]
-
+            self.errors.append([self.line, self.column, word])
+            return [None,None,None,None]
 
     def uniline_state(self,linea, columna, text, word):
         self.counter += 1
@@ -177,11 +148,9 @@ class lex_HTML():
             else:
 
                 return [linea, columna, 'comentario', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'comentario', word]
 #----------------------------------------------------------------------------------------------------------------------------
-
     def number_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
@@ -192,7 +161,6 @@ class lex_HTML():
                 return self.decimal_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'integer', word]
-                #agregar automata de numero en el arbol, con el valor
         else:
             return [linea, columna, 'integer', word]
 
@@ -204,7 +172,6 @@ class lex_HTML():
                 return self.decimal_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'decimal', word]
-                #agregar automata de decimal en el arbol, con el valor
         else:
             return [linea, columna, 'decimal', word]
 
@@ -224,7 +191,6 @@ class lex_HTML():
                 return self.simple_string_final_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'cadena simple con error', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'cadena simple con error', word]
 
@@ -251,7 +217,6 @@ class lex_HTML():
                 return self.double_string_final_state(linea, columna, text, word + text[self.counter])
             else:
                 return [linea, columna, 'cadena doble con error', word]
-                #agregar automata de identificador en el arbol, con el valor
         else:
             return [linea, columna, 'cadena doble con error', word]
 
@@ -261,7 +226,6 @@ class lex_HTML():
         if self.counter < len(text):
             return [linea, columna, 'string',  word]
 #----------------------------------------------------------------------------------------------------------------------------
-
     def verification_reserved(self,TokenList):
         for token in TokenList:
             if token[2] == 'identificador':
@@ -279,7 +243,6 @@ class lex_HTML():
             self.token_output.append(token)
             if(token[0]!=None):
                 self.clean+=str(token[3])
-            # self.clean+=str(token[3])
         for error in self.errors:
             counter+=1          
             self.error_output.append(error)          

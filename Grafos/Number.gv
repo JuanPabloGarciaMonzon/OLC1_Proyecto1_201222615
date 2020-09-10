@@ -1,0 +1,8 @@
+// Grafica de Estados
+digraph {
+	node [shape=circle]
+	S0 [label=S0]
+	S1 [shape=doublecircle]
+	S0 -> S1 [label=D]
+	S1 -> S1 [label=D]
+}
