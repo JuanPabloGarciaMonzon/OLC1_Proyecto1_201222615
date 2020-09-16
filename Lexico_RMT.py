@@ -6,6 +6,7 @@ class lex_RMT():
     def __init__(self): 
         self.cadena = " "
         self.line = 0 
+        self.clean = " "
         self.column = 0
         self.counter = 0
         self.errors = []
@@ -32,7 +33,8 @@ class lex_RMT():
                 listaTokens.append(self.identifier_state(self.line,self.column,text, text[self.counter]))
             elif re.search(r"[0-9]", text[self.counter]): #NUMERO
                 listaTokens.append(self.number_state(self.line, self.column, text, text[self.counter]))
-
+            elif re.search(r"[\/]", text[self.counter]): #DIVISION
+                listaTokens.append(self.div_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[\n]", text[self.counter]):#SALTO DE LINEA
                 self.counter += 1
                 self.line += 1
@@ -101,11 +103,41 @@ class lex_RMT():
         else:
             return [linea, columna, 'decimal', word]
 #----------------------------------------------------------------------------------------------------------------------------
+    def div_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"[\/]", text[self.counter]):
+                return self.uniline_state(linea, columna, text, word + text[self.counter])
+            else:
+                return [linea, columna, 'DIV', word]
+        else:
+            return [linea, columna, 'DIV', word]
+
+    def uniline_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"[\S]", text[self.counter]):
+                return self.uniline_state(linea, columna, text, word + text[self.counter])
+            elif re.search(r"[ \t]", text[self.counter]):
+                
+                return self.uniline_state(linea, columna, text, word + text[self.counter])
+
+            else:
+
+                return [linea, columna, 'comentario', word]
+        else:
+            return [linea, columna, 'comentario', word]
+#----------------------------------------------------------------------------------------------------------------------------
+ 
     def receive_input(self):
         tokens = self.initial_state(self.cadena)
         counter = 0
         for token in tokens:
             self.token_output.append(token)
+            if(token[0]!=None):
+                self.clean+=str(token[3])
         for error in self.errors:
             counter+=1          
             self.error_output.append(error)          

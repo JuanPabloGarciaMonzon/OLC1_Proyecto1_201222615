@@ -5,7 +5,7 @@ class stateList:
         if len(list) > 0:
 
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            direction = script_dir + "/Reportes/css_states.html"
+            direction = script_dir + "\\Reportes\\css_states.html"
             try:
                 try:
                     os.remove(direction)

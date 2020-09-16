@@ -1,6 +1,5 @@
 
 import os
-import re
 
 #     #  S->E R
       #  R-> E R
@@ -29,20 +28,17 @@ class syn_RMT():
         self.tokenAt = self.list[self.contadorT]
         if(self.contadorT != len(self.list)-1):            
             if(self.tokenAt[2]=="salto" and self.flag == True):
-                self.line.append([self.string,"incorrecto"])
+                self.line.append([self.string,"incorrecto",self.tokenAt[0]-1])
                 self.string=""
                 self.tokenAt = self.nextToken()                
-                print("ERROR")
                 self.flag = False
                 self.E()
                 self.R()
 
             elif(self.tokenAt[2] =="salto" and self.flag == False):
-                print(self.string)
-                self.line.append([self.string,"correcto"])
+                self.line.append([self.string,"correcto",self.tokenAt[0]-1,self.tokenAt[1]])
                 self.string=""
                 self.match(self.tokenAt,"salto","SE ESPERABA SALTO")                
-                print("CORRECTO")
                 self.E()
                 self.R()
 
@@ -155,8 +151,6 @@ class syn_RMT():
 
 
     def __init__(self,lista):
-    #print(re.match(rmt.signs.get("PARA"),"("))
-    #Variable que se usa como índice para recorrer la lista de Tokens
     #Lista de Tokens que el parser recibe del analizador léxico
         self.list = lista
         self.contadorT = 0
@@ -172,5 +166,4 @@ class syn_RMT():
         for l in self.line:
             self.contador+=1
             self.aux.append(l)                 
-            self.errorList[len(self.aux)] = {'count':str(self.contador), 'linea':str(l[0]) ,"resultado":str(l[1])}
-        print(self.errorList)
+            self.errorList[len(self.aux)] = {'count':str(self.contador), 'L':str(l[2]), 'linea':str(l[0]) ,"resultado":str(l[1])}

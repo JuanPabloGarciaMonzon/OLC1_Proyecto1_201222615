@@ -1,0 +1,12 @@
+// Grafica de Estados
+digraph {
+	node [shape=circle]
+	S0 [label=S0]
+	S1 [label=S1]
+	S2 [label=S2]
+	S2 [shape=doublecircle]
+	S0 -> S1 [label="'"]
+	S1 -> S1 [label="."]
+	S1 -> S1 [label="\S"]
+	S1 -> S2 [label="'"]
+}

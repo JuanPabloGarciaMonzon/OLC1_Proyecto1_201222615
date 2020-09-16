@@ -21,6 +21,7 @@ class rmtList:
                                   
                        '<td>' + 'No.' +    '</td>'
                        '<td>' + 'Linea' + '</td>'
+                       '<td>' + 'Operacion' + '</td>'
                        '<td>' + 'Resultado' +    '</td>'
                                                                                       
                     '</tr>')
@@ -29,6 +30,7 @@ class rmtList:
                             '<tr>'
                             
                             '<td>' + str(list[error]['count']) + '</td>'
+                            '<td>' + str(list[error]['L']) + '</td>'
                             '<td>' + str(list[error]['linea']) + '</td>'
                             '<td>' + str(list[error]['resultado']) + '</td>'
                             

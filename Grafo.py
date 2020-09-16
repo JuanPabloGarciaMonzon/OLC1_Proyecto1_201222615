@@ -16,7 +16,7 @@ class grafica():
         dot.edge("S1", "S2", label="\"")
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Grafos/String.gv"
+        direction = script_dir + "\\Grafos\\String.gv"
         dot.render(direction, view=False)
 
     def grafoChar(self):
@@ -33,7 +33,7 @@ class grafica():
         dot.edge("S1", "S2", label="\'")
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Grafos/Char.gv"
+        direction = script_dir + "\\Grafos\\Char.gv"
         dot.render(direction, view=False)
 
     def grafoNumber(self):
@@ -46,7 +46,7 @@ class grafica():
         dot.edge("S1", "S1", label="D")
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Grafos/Number.gv"
+        direction = script_dir + "\\Grafos\\Number.gv"
         dot.render(direction, view=False)
 
     def grafoID(self):
@@ -59,7 +59,7 @@ class grafica():
         dot.edge("S1", "S1", label="ID")
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Grafos/ID.gv"
+        direction = script_dir + "\\Grafos\\ID.gv"
         dot.render(direction, view=False)
 
     def grafoDecimal(self):
@@ -80,7 +80,7 @@ class grafica():
         dot.edge("S4", "S4", label="D")
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Grafos/Decimal.gv"
+        direction = script_dir + "\\Grafos\\Decimal.gv"
         dot.render(direction, view=False)
 
     def grafoMultiComment(self):
@@ -101,7 +101,7 @@ class grafica():
         dot.edge("S3", "S4", label="/")
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Grafos/MultiComentario.gv"
+        direction = script_dir + "\\Grafos\\MultiComentario.gv"
         dot.render(direction, view=False)
 
     def grafoUniComment(self):
@@ -119,5 +119,5 @@ class grafica():
         dot.edge("S2", "S3", label="/n")
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Grafos/UniComentario.gv"
+        direction = script_dir + "\\Grafos\\UniComentario.gv"
         dot.render(direction, view=False)

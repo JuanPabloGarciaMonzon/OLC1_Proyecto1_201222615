@@ -29,7 +29,7 @@ class lex_CSS():
 
         self.signs = {
         "PUNTOCOMA":'\;', "COMA":'\,', "LLAVEA":'\{', "LLAVEC":'\}', 
-        "PARA":'\(',"POR":'\*', "PARC":'\)', "PUNTO":'\.',"DPUNTO":'\:',"PORCENTAJE":'\%'}
+        "PARA":'\(',"POR":'\*', "PARC":'\)', "PUNTO":'\.',"DPUNTO":'\:',"PORCENTAJE":'\%',"NUMERAL":'\#'}
 
     def initial_state(self,text):
 
@@ -42,10 +42,6 @@ class lex_CSS():
             if re.search(r"[A-Za-z\-\_]", text[self.counter]): #IDENTIFICADOR
                 self.states.append(["id_inicio",text[self.counter]])
                 listaTokens.append(self.identifier_state(self.line,self.column,text, text[self.counter]))
-
-            elif re.search(r"\#", text[self.counter]): #HEXADECIMAL
-                self.states.append(["numeral_inicio",text[self.counter]])
-                listaTokens.append(self.numeral_state(self.line, self.column, text, text[self.counter])) 
 
             elif re.search(r"[0-9]", text[self.counter]): #NUMERO
                 self.states.append(["numero_inicio",text[self.counter]])
@@ -112,38 +108,6 @@ class lex_CSS():
             self.states.append(["id_aceptacion",word])
             return [linea, columna, 'identificador', word]
 #----------------------------------------------------------------------------------------------------------------------------
-    def numeral_state(self,linea, columna, text, word):
-        contador = 0
-        self.counter += 1
-        self.column += 1
-        if self.counter < len(text):
-            if re.search(r"[a-fA-F_0-9]", text[self.counter]):#NUMERAL
-                self.states.append(["hexadecimal",text[self.counter]])                                  
-                return self.hexadecimal_state(linea, columna, text, word + text[self.counter])
-
-            else:
-                self.states.append(["numeral_aceptacion",word])
-                return [linea, columna, 'operador', word]
-        else:
-            self.states.append(["numeral_aceptacion",word])
-            return [linea, columna, 'operador', word]
-
-    def hexadecimal_state(self,linea, columna, text, word):
-        contador = 0
-        self.counter += 1
-        self.column += 1
-        if self.counter < len(text):
-            if re.search(r"[a-fA-F_0-9]", text[self.counter]):#HEXADECIMAL
-                self.states.append(["hexadecimal",text[self.counter]])                                  
-                return self.hexadecimal_state(linea, columna, text, word + text[self.counter])
-
-            else:
-                self.states.append(["hexadecimal_aceptacion",word])
-                return [linea, columna, 'hexadecimal', word]
-        else:
-            self.states.append(["hexadecimal_aceptacion",word])
-            return [linea, columna, 'hexadecimal', word]
-#----------------------------------------------------------------------------------------------------------------------------
     def div_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
@@ -153,11 +117,11 @@ class lex_CSS():
                 return self.C_state(linea, columna, text, word + text[self.counter])
 
             else:
-                self.states.append(["division_aceptacion",word])
-                return [linea, columna, 'operador', word]
+                self.errors.append([self.line, self.column, word])
+                return [None,None,None,None]
         else:
-            self.states.append(["division_aceptacion",word])
-            return [linea, columna, 'operador', word]
+            self.errors.append([self.line, self.column, word])
+            return [None,None,None,None]
 #----------------------------------------------------------------------------------------------------------------------------
     def B_state(self,linea, columna, text, word):
         self.counter += 1
@@ -267,13 +231,19 @@ class lex_CSS():
         if self.counter < len(text):
             if re.search(r"[0-9]", text[self.counter]):#DECIMAL
                 self.states.append(["decimal",str(text[self.counter])])
-                return self.decimal_state(linea, columna, text, word + text[self.counter])
-
+                return self.decimal_final_state(linea, columna, text, word + text[self.counter])
             else:
-                self.states.append(["decimal_aceptacion",word])
-                return [linea, columna, 'decimal', word]
+                self.errors.append([self.line, self.column, word])
+                return [None,None,None,None]
         else:
-            self.states.append(["decimal_aceptacion",word])
+            self.errors.append([self.line, self.column, word])
+            return [None,None,None,None]
+
+    def decimal_final_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            self.states.append(["decimal_aceptacion",str(text[self.counter])])
             return [linea, columna, 'decimal', word]
 #----------------------------------------------------------------------------------------------------------------------------
     def simple_string_state(self,linea, columna, text, word):

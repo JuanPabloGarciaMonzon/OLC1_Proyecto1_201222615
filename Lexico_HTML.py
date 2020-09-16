@@ -20,7 +20,7 @@ class lex_HTML():
 
         self.signs = {
         "PUNTOCOMA":'\;', "COMA":'\,', "LLAVEA":'\{', "LLAVEC":'\}', 
-        "PARA":'\(', "PARC":'\)', "PUNTO":'\.',"DPUNTO":'\:',
+        "PARA":'\(', "PARC":'\)', "DIV":'\/', "PUNTO":'\.',"DPUNTO":'\:',
         "TAGA":'\<',"TAGCI":'\>',"IGUAL":"\="}
 
     def initial_state(self,text):
@@ -40,10 +40,11 @@ class lex_HTML():
             elif re.search(r"[\>]", text[self.counter]): #TAG DE CIERRE
                 self.listaTokens.append([self.line, self.column,"operador",">"])
                 self.listaTokens.append(self.tag_state(self.line, self.column, text, text[self.counter]))
+            elif re.search(r"[\<]", text[self.counter]): #TAG DE CIERRE
+                self.listaTokens.append(self.comment_state(self.line, self.column, text, text[self.counter]))
             elif re.search(r"[\/]", text[self.counter]): #DIVISION
                 self.listaTokens.append(self.div_state(self.line, self.column, text, text[self.counter]))
                 
-
             elif re.search(r"[\n]", text[self.counter]):#SALTO DE LINEA
                 self.counter += 1
                 self.line += 1
@@ -122,6 +123,99 @@ class lex_HTML():
             self.listaTokens.append([linea,columna,"TAG",word[1:-2]])         
             return [linea, columna, 'operador',  "</"]
 #----------------------------------------------------------------------------------------------------------------------------
+    def identifier_state(self,linea, columna, text, word):
+
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"[a-zA-Z_0-9\_]", text[self.counter]):#IDENTIFICADOR
+                return self.identifier_state(linea, columna, text, word + text[self.counter])
+            else:
+                return [linea, columna, 'identificador', word]
+        else:
+            return [linea, columna, 'identificador', word]
+#----------------------------------------------------------------------------------------------------------------------------
+    def comment_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"[\!]", text[self.counter]):
+                return self.Ca_state(linea, columna, text, word + text[self.counter])                   
+            else:
+                return [linea, columna, 'operador',  word]
+        else:
+            return [linea, columna, 'operador',  word]
+
+    def Ca_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"[\-]", text[self.counter]):
+                return self.Caa_state(linea, columna, text, word + text[self.counter])
+                    
+            else:
+                return [linea, columna, 'operador',  word]
+        else:
+            return [linea, columna, 'operador',  word]
+
+
+    def Caa_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"[\-]", text[self.counter]):
+                return self.Cb_state(linea, columna, text, word + text[self.counter])
+                    
+            else:
+                return [linea, columna, 'operador',  word]
+        else:
+            return [linea, columna, 'operador',  word]
+
+
+    def Cb_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"(.|\s)", text[self.counter]):
+                if re.search(r"[\-]", text[self.counter]):
+                    return self.Cc_state(linea, columna, text, word + text[self.counter])
+                return self.Cb_state(linea, columna, text, word + text[self.counter])
+                    
+            else:
+                return [linea, columna, 'identificadorb',  word]
+        else:
+            return [linea, columna, 'identificadorb',  word]
+
+    def Cc_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"[\-]", text[self.counter]):
+                return self.Cd_state(linea, columna, text, word + text[self.counter])
+                    
+            else:
+                return self.Cc_state(linea, columna, text, word + text[self.counter])
+        else:
+            return [linea, columna, 'identificadorc',  word]
+
+    def Cd_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):
+            if re.search(r"[\>]", text[self.counter]):
+                return self.Ce_state(linea, columna, text, word + text[self.counter])
+                    
+            else:
+                return self.Cd_state(linea, columna, text, word + text[self.counter])
+        else:
+            return [linea, columna, 'identificadord', word]
+
+    def Ce_state (self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        if self.counter < len(text):       
+            return [linea, columna, 'comentario',  word]
+#----------------------------------------------------------------------------------------------------------------------------
     def div_state(self,linea, columna, text, word):
         self.counter += 1
         self.column += 1
@@ -129,11 +223,9 @@ class lex_HTML():
             if re.search(r"[\/]", text[self.counter]):
                 return self.uniline_state(linea, columna, text, word + text[self.counter])
             else:
-                self.errors.append([self.line, self.column, word])
-                return [None,None,None,None]
+                return [linea, columna, 'operador', word]
         else:
-            self.errors.append([self.line, self.column, word])
-            return [None,None,None,None]
+            return [linea, columna, 'operador', word]
 
     def uniline_state(self,linea, columna, text, word):
         self.counter += 1
@@ -169,10 +261,22 @@ class lex_HTML():
         self.column += 1
         if self.counter < len(text):
             if re.search(r"[0-9]", text[self.counter]):#DECIMAL
-                return self.decimal_state(linea, columna, text, word + text[self.counter])
+                return self.decimal_final_state(linea, columna, text, word + text[self.counter])
             else:
-                return [linea, columna, 'decimal', word]
+                self.errors.append([self.line, self.column, word])
+                return [None,None,None,None]
         else:
+            self.errors.append([self.line, self.column, word])
+            return [None,None,None,None]
+
+    def decimal_final_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        Deci = Grafo.grafica()
+        if self.counter < len(text):
+            if(self.flag_decimal==False):
+                Deci.grafoDecimal()
+                self.flag_decimal=True
             return [linea, columna, 'decimal', word]
 
 #----------------------------------------------------------------------------------------------------------------------------

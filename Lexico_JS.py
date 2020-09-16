@@ -105,7 +105,7 @@ class lex_JS():
         self.column += 1
         IDr = Grafo.grafica()
         if self.counter < len(text):
-            if re.search(r"[a-zA-Z_0-9]", text[self.counter]):#IDENTIFICADOR
+            if re.search(r"[a-zA-Z_0-9\_]", text[self.counter]):#IDENTIFICADOR
                 return self.identifier_state(linea, columna, text, word + text[self.counter])
             else:
                 if(self.flag_id==False):
@@ -369,13 +369,22 @@ class lex_JS():
         Deci = Grafo.grafica()
         if self.counter < len(text):
             if re.search(r"[0-9]", text[self.counter]):#DECIMAL
-                return self.decimal_state(linea, columna, text, word + text[self.counter])
+                return self.decimal_final_state(linea, columna, text, word + text[self.counter])
             else:
-                if(self.flag_decimal==False):
-                    Deci.grafoDecimal()
-                    self.flag_decimal=True
-                return [linea, columna, 'decimal', word]
+                self.errors.append([self.line, self.column, word])
+                return [None,None,None,None]
         else:
+            self.errors.append([self.line, self.column, word])
+            return [None,None,None,None]
+
+    def decimal_final_state(self,linea, columna, text, word):
+        self.counter += 1
+        self.column += 1
+        Deci = Grafo.grafica()
+        if self.counter < len(text):
+            if(self.flag_decimal==False):
+                Deci.grafoDecimal()
+                self.flag_decimal=True
             return [linea, columna, 'decimal', word]
 #----------------------------------------------------------------------------------------------------------------------------
     def simple_string_state(self,linea, columna, text, word):

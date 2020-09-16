@@ -171,7 +171,7 @@ class Interfaz(tk.Frame):
             self.terminal.insert(tk.INSERT,"----------------------------------------Tokens--------------------------------\n")
             self.terminal.insert(tk.END,str(css.token_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[","").replace("\\n","").replace("None,","").replace("None",""))
             self.terminal.insert(tk.END,"----------------------------------------Errors--------------------------------\n")
-            self.terminal.insert(tk.END,str(css.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))
+            self.terminal.insert(tk.END,str(css.error_output).replace("],", "\n").replace("[[","[").replace("]]","\n").replace("[",""))       
             self.error(css.error_list,"CSS")
             self.css_state(css.state_list,"CSS")
             self.pintar(css.token_output)
@@ -205,6 +205,10 @@ class Interfaz(tk.Frame):
             self.pintar(rmt.token_output)
             syn = syn_RMT(rmt.token_output)
             self.rmt_lines(syn.errorList,"RMT")
+            if(str(txt).__contains__("PATHW:")):
+                self.get_direction("PATHW:",html.clean)
+                if(str(txt).__contains__("PATHL:")):
+                    self.get_direction("PATHL:",rmt.clean)
 
         else:
             box_tilte ="Execution Error"
@@ -218,7 +222,7 @@ class Interfaz(tk.Frame):
 
     def m_user(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Manuales/Manual de Usuario.pdf" 
+        direction = script_dir + "\\Manuales\\Manual de Usuario.pdf" 
         try:
             webbrowser.open_new(r'file://'+direction)
         except Exception as e:
@@ -228,7 +232,7 @@ class Interfaz(tk.Frame):
         
     def m_tecnic(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Manuales/Manual Tecnico.pdf"
+        direction = script_dir + "\\Manuales\\Manual Tecnico.pdf"
         try:
             webbrowser.open_new(r'file://'+direction)
         except Exception as e:
@@ -274,45 +278,38 @@ class Interfaz(tk.Frame):
     def get_direction(self,entrada,clean):
         txt = self.text.get(1.0, tk.END)
         sistema = platform.system()
-        if(entrada == "PATHW:" and sistema == "Windows"):            
-            if(txt.__contains__("PATHW: ")):
-                path = txt.split("PATHW: ")                
-                direction = path[1].split("\n")
-                self.create_file(direction[0].replace("*/",""),clean)
-
-            elif(txt.__contains__("PATHW:")):
-                path = txt.split("PATHW:")
-                direction = path[1].split("\n")
-                self.create_file(direction[0].replace("*/",""),clean)           
-        elif(entrada == "PATHL:" and sistema == "Linux"):            
-            if(txt.__contains__("PATHL: ")):
-                path = txt.split("PATHL: ")
-                direction = path[1].split("\n")
-                self.create_file(direction[0].replace("*/",""),clean)
-            elif(txt.__contains__("PATHL:")):
-                path = txt.split("PATHL:")
-                direction = path[1].split("\n")
-                self.create_file(direction[0].replace("*/",""),clean)
+        if(entrada == "PATHW:" and sistema == "Windows"):
+            path = txt.split("PATHW:")
+            direction = path[1].split("\n")
+            self.create_file(direction[0].replace("*/","").replace("-->","").replace("*","").replace(" ","").replace(">","").replace("?","").replace("<","").replace("|","").replace("\"",""),clean)                        
+        elif(entrada == "PATHL:" and sistema == "Linux"):
+            path = txt.split("PATHL:")
+            direction = path[1].split("\n")
+            self.create_file(direction[0].replace("*/","").replace("-->","").replace("*","").replace(" ","").replace(">","").replace(":","").replace("?","").replace("<","").replace("|","").replace("\"",""),clean)              
         else:
             box_tilte ="Operative System Error"
             box_msg = "La carpeta que esta tratando de crear no es el formato correcto en el sistema operativo en el que se encuentra actualmente"
             messagebox.showerror(box_tilte,box_msg)
 
-    def create_file(self,path,clean):
+    def create_file(self,direccion,clean):
         var_split = os.path.splitext(self.filename)[1][1:]
-        if (os.path.exists(path)):
+        if (os.path.exists(direccion)):
             try:
-                os.chdir(path.replace("\\","/"))
+                os.chdir(direccion.replace("\\","/"))
                 if(var_split=="js"):                    
-                    fic = open(path+"file.js", "w")     
+                    fic = open(direccion+"file.js", "w")     
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="css"):                    
-                    fic = open(path+"file.css", "w")     
+                    fic = open(direccion+"file.css", "w")     
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="html"):                    
-                    fic = open(path+"file.html", "w")     
+                    fic = open(direccion+"file.html", "w")     
+                    fic.write(clean)    
+                    fic.close()
+                elif(var_split=="rmt"):                    
+                    fic = open(direccion+"file.rmt", "w")     
                     fic.write(clean)    
                     fic.close()
                 else:
@@ -322,17 +319,21 @@ class Interfaz(tk.Frame):
                 messagebox.showerror(box_tilte,e)
         else:
             try:
-                os.mkdir(path.replace("\\","/"))
+                os.makedirs(direccion.replace("\\","/"))
                 if(var_split=="js"):                    
-                    fic = open(path+"file.js", "w")     
+                    fic = open(direccion+"file.js", "w")     
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="css"):                    
-                    fic = open(path+"fileC.css", "w")     
+                    fic = open(direccion+"file.css", "w")     
                     fic.write(clean)    
                     fic.close()
                 elif(var_split=="html"):                    
-                    fic = open(path+"file.html", "w")     
+                    fic = open(direccion+"file.html", "w")     
+                    fic.write(clean)    
+                    fic.close()
+                elif(var_split=="rmt"):                    
+                    fic = open(direccion+"file.rmt", "w")     
                     fic.write(clean)    
                     fic.close()
                 else:
@@ -350,11 +351,14 @@ class Interfaz(tk.Frame):
             errorList(entrada,tipo)
 
     def errorReport(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Reportes/errorList.html"
-        if(os.path.exists(direction)):
-            webbrowser.open_new(r'file://' + direction)
+        error_script_dir = os.path.dirname(os.path.abspath(__file__))
+        print("DIR:"+error_script_dir)
+        report_dir = error_script_dir + "\\Reportes\\errorList.html"
+        print("DIRECCION:"+report_dir)
+        if(os.path.exists(report_dir)):
+            webbrowser.open_new(r'file://' + report_dir)
         else:
+            print(report_dir)
             box_tilte = "Report Error"
             box_msg = "El archivo del reporte no existe"
             messagebox.showinfo(box_tilte, box_msg)       
@@ -368,10 +372,10 @@ class Interfaz(tk.Frame):
             stateList(entrada,tipo)
 
     def state_report(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Reportes/css_states.html"
-        if(os.path.exists(direction)):
-            webbrowser.open_new(r'file://' + direction)
+        state_script_dir = os.path.dirname(os.path.abspath(__file__))
+        report_dir = state_script_dir + "\\Reportes\\css_states.html"
+        if(os.path.exists(report_dir)):
+            webbrowser.open_new(r'file://' + report_dir)
         else:
             box_tilte = "Report Error"
             box_msg = "El archivo del reporte no existe"
@@ -387,20 +391,20 @@ class Interfaz(tk.Frame):
             rmtList(entrada,tipo)
 
     def rmt_report(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        direction = script_dir + "/Reportes/rmt.html"
-        if(os.path.exists(direction)):
-            webbrowser.open_new(r'file://' + direction)
+        rmt_script_dir = os.path.dirname(os.path.abspath(__file__))
+        report_dir = rmt_script_dir + "\\Reportes\\rmt.html"
+        if(os.path.exists(report_dir)):
+            webbrowser.open_new(r'file://' + report_dir)
         else:
             box_tilte = "Report Error"
             box_msg = "El archivo del reporte no existe"
             messagebox.showinfo(box_tilte, box_msg)
 
     def js_report(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        String = script_dir + "/Grafos/String.gv.pdf"
-        Unicomentario = script_dir + "/Grafos/UniComentario.gv.pdf"
-        ID = script_dir + "/Grafos/ID.gv.pdf"
+        js_script_dir = os.path.dirname(os.path.abspath(__file__))
+        String = js_script_dir + "\\Grafos\\String.gv.pdf"
+        Unicomentario = js_script_dir + "\\Grafos\\UniComentario.gv.pdf"
+        ID = js_script_dir + "\\Grafos\\ID.gv.pdf"
         try:
             webbrowser.open_new(r'file://' + String)
             webbrowser.open_new(r'file://' + Unicomentario)
